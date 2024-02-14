@@ -6,6 +6,10 @@ public class TestExport : MonoBehaviour
 
     private void Start()
     {
-        ExportToFbx.Export(testMesh, "data", () => Debug.Log("Filename Exists.")); ;
+        CreateSaveFile.SaveToFile<float>(10, 0, "nonoExist");
+        var save = LoadSaveFile.LoadFileAsync<float>();
+        Debug.Log(save);
+
+        ExportToFbx.Export(testMesh, "data", () => Debug.Log("Filename Exists."));
     }
 }
