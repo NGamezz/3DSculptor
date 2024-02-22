@@ -1,28 +1,20 @@
+using System;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
-public class LoadSaveFile : MonoBehaviour
+public class LoadSaveFile
 {
-
-    public static T LoadFileAsync<T>()
+    private static void HandleLoad<T>(string[] path, Action<T> uponRetrieval)
     {
         var bFormatter = new BinaryFormatter();
-
-        var options = UnityEditor.EditorUtility.OpenFilePanel("Test", Application.persistentDataPath, "save");
-        if (options.Length == 0)
-        {
-            Debug.LogWarning("Failed to start Panel, or cancelled.");
-            return default;
-        }
-
         var data = default(T);
         FileStream stream = null;
         try
         {
-            if (!File.Exists(options)) { throw new IOException("File Doesn't Exist."); }
+            if (!File.Exists(path[0])) { throw new IOException("File Doesn't Exist."); }
 
-            stream = File.OpenRead(options);
+            stream = File.OpenRead(path[0]);
             data = (T)bFormatter.Deserialize(stream);
         }
         catch (IOException e)
@@ -37,7 +29,12 @@ public class LoadSaveFile : MonoBehaviour
                 stream.Close();
             }
         }
+        uponRetrieval?.Invoke(data);
+    }
 
-        return data;
+    public static void LoadFileAsync<T>(Action<T> uponRetrieval)
+    {
+
+        SimpleFileBrowser.FileBrowser.ShowLoadDialog((path) => HandleLoad<T>(path, uponRetrieval), null, SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
     }
 }

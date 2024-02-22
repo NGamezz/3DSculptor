@@ -1,15 +1,27 @@
+using Unity.Mathematics;
 using UnityEngine;
 
 public class TestExport : MonoBehaviour
 {
-    [SerializeField] private GameObject[] testMesh;
+    [SerializeField] private GameObject testMesh;
 
-    private void Start()
+    public void Export()
     {
         CreateSaveFile.SaveToFile<float>(10, 0, "nonoExist");
-        var save = LoadSaveFile.LoadFileAsync<float>();
-        Debug.Log(save);
+        LoadSaveFile.LoadFileAsync<float>(HandleSaveLoad);
 
-        ExportToFbx.Export(testMesh, "data", () => Debug.Log("Filename Exists."));
+        ExportMeshToOBJ.ExportToOBJ(testMesh);
     }
+
+    private void HandleSaveLoad<T>(T data)
+    {
+        Debug.Log(data);
+    }
+}
+
+public struct VoxelData
+{
+    float3[] vertices;
+    float2[] uv;
+    float3[] normals;
 }
