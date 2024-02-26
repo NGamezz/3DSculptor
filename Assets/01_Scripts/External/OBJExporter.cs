@@ -6,54 +6,62 @@ using System;
 //Original Obtained from SteenPetersen & ReDarkTechnology on the Unity Forum. Adjusted for personal requirement, Original Can be found below.
 public class ExportMeshToOBJ : ScriptableObject
 {
-    public static async void ExportToOBJ(GameObject obj, Action ifExistsCallback = null)
+    public static async void ExportToOBJ ( GameObject obj = null, Mesh _mesh = null, Action ifExistsCallback = null )
     {
-        if (obj == null)
+        Mesh mesh = null;
+
+        if ( obj == null && _mesh == null )
         {
             Debug.Log("No object selected.");
             return;
         }
-
-        if (!obj.TryGetComponent<MeshFilter>(out var meshFilter))
+        else if ( _mesh == null )
         {
-            Debug.Log("No MeshFilter is found in selected GameObject.", obj);
-            return;
+            if ( !obj.TryGetComponent<MeshFilter>(out var meshFilter) )
+            {
+                Debug.Log("No MeshFilter is found in selected GameObject.", obj);
+                return;
+            }
+            if ( meshFilter.sharedMesh == null )
+            {
+                Debug.Log("No mesh is found in selected GameObject.", obj);
+                return;
+            }
+            mesh = meshFilter.sharedMesh;
+        }
+        else
+        {
+            mesh = _mesh;
         }
 
-        if (meshFilter.sharedMesh == null)
-        {
-            Debug.Log("No mesh is found in selected GameObject.", obj);
-            return;
-        }
+        string path = Path.Combine(Application.persistentDataPath, $"{mesh.name}.obj");
 
-        string path = Path.Combine(Application.persistentDataPath, $"{obj.name}.obj");
-
-        if (ifExistsCallback != null && File.Exists(path))
+        if ( ifExistsCallback != null && File.Exists(path) )
         {
             ifExistsCallback?.Invoke();
             return;
         }
 
         StreamWriter writer = new(path);
-        await writer.WriteAsync(GetMeshOBJ(obj.name, meshFilter.sharedMesh));
+        await writer.WriteAsync(GetMeshOBJ(mesh.name, mesh));
         writer.Close();
     }
 
-    public static string GetMeshOBJ(string name, Mesh mesh)
+    public static string GetMeshOBJ ( string name, Mesh mesh )
     {
         StringBuilder sb = new();
 
-        foreach (var v in mesh.vertices)
+        foreach ( var v in mesh.vertices )
             sb.Append(string.Format("v {0} {1} {2}\n", v.x, v.y, v.z));
 
-        foreach (var v in mesh.normals)
+        foreach ( var v in mesh.normals )
             sb.Append(string.Format("vn {0} {1} {2}\n", v.x, v.y, v.z));
 
-        for (int material = 0; material < mesh.subMeshCount; material++)
+        for ( int material = 0; material < mesh.subMeshCount; material++ )
         {
             sb.Append(string.Format("\ng {0}\n", name));
             int[] triangles = mesh.GetTriangles(material);
-            for (int i = 0; i < triangles.Length; i += 3)
+            for ( int i = 0; i < triangles.Length; i += 3 )
             {
                 sb.Append(string.Format("f {0}/{0} {1}/{1} {2}/{2}\n",
                 triangles[i] + 1,

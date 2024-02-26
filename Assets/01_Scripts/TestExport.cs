@@ -5,15 +5,24 @@ public class TestExport : MonoBehaviour
 {
     [SerializeField] private GameObject testMesh;
 
-    public void Export()
+    private void Start ()
+    {
+        if ( testMesh != null )
+            Export();
+    }
+
+    public void Export ()
     {
         CreateSaveFile.SaveToFile<float>(10, 0, "nonoExist");
         LoadSaveFile.LoadFileAsync<float>(HandleSaveLoad);
 
-        ExportMeshToOBJ.ExportToOBJ(testMesh);
+        //Purely for testing.
+        var chunkHolder = FindAnyObjectByType<ChunksHolder>();
+
+        ExportMeshToOBJ.ExportToOBJ(_mesh: chunkHolder.GatherMeshes());
     }
 
-    private void HandleSaveLoad<T>(T data)
+    private void HandleSaveLoad<T> ( T data )
     {
         Debug.Log(data);
     }
