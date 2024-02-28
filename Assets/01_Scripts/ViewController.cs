@@ -11,6 +11,8 @@ public class ViewController : MonoBehaviour
     [Tooltip("Multiplicative"), Range(1, 6)]
     [SerializeField] private float zoomSpeed = 0.5f;
 
+    [SerializeField] private bool pan = false;
+
     private float xRotation;
     private float yRotation;
 
@@ -21,7 +23,10 @@ public class ViewController : MonoBehaviour
 
     private void Update ()
     {
-        HandleCameraRotation();
+        if(pan)
+            HandlePanning();
+        else
+            HandleCameraRotation();
         ZoomHandling();
     }
 
@@ -31,7 +36,7 @@ public class ViewController : MonoBehaviour
 
         var translation = 10.0f * Input.mouseScrollDelta.y * Time.deltaTime * zoomSpeed * direction.normalized;
 
-        if ( Vector3.Distance(anchor.position, cameraTransform.position + translation) < 10.0f)
+        if ( Vector3.Distance(anchor.position, cameraTransform.position + translation) < 10.0f )
         { return; }
 
         cameraTransform.Translate(10.0f * Input.mouseScrollDelta.y * Time.deltaTime * zoomSpeed * direction.normalized, Space.Self);
@@ -61,5 +66,15 @@ public class ViewController : MonoBehaviour
         yRotation += mouseX;
 
         transform.SetPositionAndRotation(anchor.position, Quaternion.Euler(xRotation, yRotation, 0));
+    }
+
+    private void HandlePanning ()
+    {
+        float mouseX = Input.GetAxis("Mouse X") * mouseSens;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSens;
+
+        Vector3 moveDirection = transform.forward * mouseY + transform.right * mouseX;
+
+        transform.Translate(moveDirection * Time.deltaTime);
     }
 }

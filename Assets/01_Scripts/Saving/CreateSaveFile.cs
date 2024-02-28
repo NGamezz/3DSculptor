@@ -9,6 +9,7 @@ public class SaveData<T>
     public T data;
 }
 
+[Serializable]
 public class VoxelHolder
 {
     public int version;
@@ -17,11 +18,12 @@ public class VoxelHolder
 
 public class CreateSaveFile
 {
-    public static void SaveToFile<T>(T thingToSave, int version, string fileName)
+    public static void SaveToFile<T>(T thingToSave, int version, string path)
     {
-        var path = Path.Combine(Application.persistentDataPath, $"{fileName}-{version}.save");
-
+        //var path = Path.Combine(Application.persistentDataPath, $"{fileName}-{version}.save");
         var bFormatter = new BinaryFormatter();
+
+        path += $"-{version}.save";
 
         FileStream stream = null;
         try
@@ -34,9 +36,10 @@ public class CreateSaveFile
             }
             else
             {
+                stream = File.Open(path, FileMode.Open);
+                stream.Flush();
                 Debug.Log("File Exists.");
             }
-
         }
         catch (Exception e)
         {

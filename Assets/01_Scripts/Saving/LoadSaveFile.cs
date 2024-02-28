@@ -34,7 +34,6 @@ public class LoadSaveFile
 
     public static void LoadFileAsync<T>(Action<T> uponRetrieval)
     {
-
         SimpleFileBrowser.FileBrowser.ShowLoadDialog((path) => HandleLoad<T>(path, uponRetrieval), null, SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
     }
 }
