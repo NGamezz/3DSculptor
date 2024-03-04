@@ -2,7 +2,7 @@ using UnityEngine;
 
 public abstract class Tool : MonoBehaviour
 {
-    public float Size;
+    public bool Utility = false;
 
     public string Name;
 
@@ -10,4 +10,9 @@ public abstract class Tool : MonoBehaviour
 
     public abstract void Activate ();
     public abstract void Deactivate ();
+}
+
+public interface ISizeChangable
+{
+    public abstract void ChangeSize (float size);
 }

@@ -1,26 +1,16 @@
 using UnityEngine;
 
-public class SphereTool : Tool
+public class SphereTool : Brush
 {
-    [SerializeField] private int modelLayerMask;
-
-    private new Camera camera;
-
-    private GameObject sphereGhost;
-
-    private bool state = false;
-
-    private Vector3 targetPosition = Vector3.zero;
-
-    private void Start ()
+    protected override void Awake ()
     {
-        camera = Camera.main;
-        sphereGhost = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        sphereGhost.GetComponent<Collider>().enabled = false;
+        ghost= GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        ghost.GetComponent<Collider>().enabled = false;
+        ghost.layer = ownLayer;
+        
+        ghost.GetComponent<Renderer>().material = ghostMaterial;
 
-        Color color = Color.white;
-        color.a = 0.5f;
-        sphereGhost.GetComponent<Renderer>().material.color = color;
+        base.Awake();
     }
 
     private void Update ()
@@ -28,56 +18,13 @@ public class SphereTool : Tool
         if ( !state )
             return;
         GetPositionOnModel();
-    }
-
-    private void FixedUpdate ()
-    {
-        if ( !state )
-            return;
-        UpdateToolSize();
-    }
-
-    private void UpdateToolSize ()
-    {
-        //sphereGhost.Radius = this.Size;
-    }
-
-    RaycastHit[] results = new RaycastHit[1];
-    private void GetPositionOnModel ()
-    {
-        var ray = camera.ScreenPointToRay(Input.mousePosition);
-
-        Debug.DrawRay(ray.origin, ray.direction * 100.0f, Color.blue);
-
-        if ( Physics.RaycastNonAlloc(ray, results) == 0 || results[0].transform.gameObject.layer != modelLayerMask )
+        if ( Input.GetMouseButton(0) )
         {
-            targetPosition = Vector3.zero;
-            return;
+            Perform(targetPosition, true);
         }
-
-        targetPosition = results[0].point;
-        sphereGhost.transform.position = targetPosition;
-    }
-
-    private void OnDrawGizmos ()
-    {
-        if ( targetPosition == Vector3.zero )
-            return;
-        Gizmos.color = Color.blue;
-        Gizmos.DrawSphere(targetPosition, this.Size);
-    }
-
-    public override void Activate ()
-    {
-        state = true;
-        sphereGhost.SetActive(true);
-        Debug.Log("activated");
-    }
-
-    public override void Deactivate ()
-    {
-        state = false;
-        sphereGhost.SetActive(false);
-        Debug.Log("deactivated");
+        else if ( Input.GetMouseButton(1) )
+        {
+            Perform(targetPosition, false);
+        }
     }
 }

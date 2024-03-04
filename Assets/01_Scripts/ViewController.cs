@@ -11,6 +11,8 @@ public class ViewController : MonoBehaviour
     [Tooltip("Multiplicative"), Range(1, 6)]
     [SerializeField] private float zoomSpeed = 0.5f;
 
+    [SerializeField] private int rotateMouseButton = 2;
+
     [SerializeField] private bool pan = false;
 
     private float xRotation;
@@ -44,19 +46,19 @@ public class ViewController : MonoBehaviour
 
     private void HandleCameraRotation ()
     {
-        if ( Input.GetMouseButtonDown(1) )
+        if ( Input.GetMouseButtonDown(rotateMouseButton) )
         {
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
         }
 
-        if ( Input.GetMouseButtonUp(1) )
+        if ( Input.GetMouseButtonUp(rotateMouseButton) )
         {
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
         }
 
-        if ( !Input.GetMouseButton(1) )
+        if ( !Input.GetMouseButton(rotateMouseButton) )
         { return; }
 
         float mouseX = Input.GetAxis("Mouse X") * mouseSens;

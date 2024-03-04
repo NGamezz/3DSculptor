@@ -3,21 +3,28 @@ using UnityEngine;
 using System;
 using System.Diagnostics;
 using System.Collections.Generic;
-using Unity.Burst;
-using Unity.Jobs;
-using Unity.Collections.LowLevel.Unsafe;
-using Unity.Collections;
-using System.Threading;
-using ReadOnlyAttribute = Unity.Collections.ReadOnlyAttribute;
-using System.Runtime.CompilerServices;
 
 public struct Triangle
 {
-    public Vector3[] vertices;
+#pragma warning disable 649 // disable unassigned variable warning
+    public Vector3 a;
+    public Vector3 b;
+    public Vector3 c;
 
-    public Triangle ( int _ )
+    public Vector3 this[int i]
     {
-        vertices = new Vector3[3];
+        get
+        {
+            switch ( i )
+            {
+                case 0:
+                    return a;
+                case 1:
+                    return b;
+                default:
+                    return c;
+            }
+        }
     }
 }
 
@@ -62,7 +69,7 @@ public struct Cube
         Triangles = new Triangle[12];
         for ( int i = 0; i < 12; i++ )
         {
-            Triangles[i] = new Triangle(0);
+            //Triangles[i] = new Triangle(0);
         }
         Index = 0;
     }
@@ -119,15 +126,15 @@ public class MarchingCubes : MonoBehaviour
 
                     for ( int i = 0; triangulation[i] != -1; i += 3 )
                     {
-                        Triangle triangle = new(0);
+                        //Triangle triangle = new(0);
                         for ( int t = 0; t < 3; t++ )
                         {
                             int indexA = TriangulationTable.cornerIndexAFromEdge[triangulation[i + t]];
                             int indexB = TriangulationTable.cornerIndexBFromEdge[triangulation[i + t]];
-                            triangle.vertices[t] = interpolateVerts(cube.Voxels[indexA], cube.Voxels[indexB]);
+                            //triangle.vertices[t] = interpolateVerts(cube.Voxels[indexA], cube.Voxels[indexB]);
                         }
 
-                        triangles.Add(triangle);
+                        //triangles.Add(triangle);
                     }
                 }
             }
@@ -143,7 +150,7 @@ public class MarchingCubes : MonoBehaviour
             for ( int j = 0; j < 3; j++ )
             {
                 _triangles[i * 3 + j] = i * 3 + j;
-                _vertices[i * 3 + j] = triangles[i].vertices[j];
+                _vertices[i * 3 + j] = triangles[i][j];
             }
         }
 
