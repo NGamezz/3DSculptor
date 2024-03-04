@@ -15,17 +15,17 @@ public class ToolHandler : MonoBehaviour
     {
         tools = FindObjectsByType<Tool>(FindObjectsSortMode.None);
 
+        if ( tools.Length == 0)
+            throw new Exception("No Tools Found.");
+
         foreach(var tool in tools)
         {
             tool.Deactivate();
         }
 
         currentTool = FindAnyObjectByType<SphereTool>();
-        if ( currentTool == null && tools.Length > 0)
+        if ( currentTool == null)
             currentTool = tools[0];
-
-        if ( currentTool == null )
-            throw new Exception("No Tools Found.");
 
         currentTool.Activate();
     }
