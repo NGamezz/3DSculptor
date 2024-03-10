@@ -15,34 +15,34 @@ public class ToolHandler : MonoBehaviour
     {
         tools = FindObjectsByType<Tool>(FindObjectsSortMode.None);
 
-        if ( tools.Length == 0)
+        if (tools.Length == 0)
             throw new Exception("No Tools Found.");
 
-        foreach(var tool in tools)
+        foreach (var tool in tools)
         {
             tool.Deactivate();
         }
 
         currentTool = FindAnyObjectByType<SphereTool>();
-        if ( currentTool == null)
+        if (currentTool == null)
             currentTool = tools[0];
 
-        currentTool.Activate();
+        currentTool.ActivateAsync();
     }
 
-    private void FixedUpdate ()
+    private void FixedUpdate()
     {
         CheckToolSwitch(SwitchCallback);
     }
 
     private void CheckToolSwitch(Action<Tool> callBack)
     {
-        if ( !canSwapTool )
+        if (!canSwapTool)
             return;
 
-        foreach(var tool in tools)
+        foreach (var tool in tools)
         {
-            if(tool.keyBind.IsKeyBindActivated())
+            if (tool.keyBind.IsKeyBindActivated())
             {
                 callBack?.Invoke(tool);
                 StartCoroutine(ResetToolSelection());
@@ -61,17 +61,17 @@ public class ToolHandler : MonoBehaviour
 
     private void SwitchCallback(Tool tool)
     {
-        if(tool == currentTool)
+        if (tool == currentTool)
             return;
 
-        if(tool.Utility == true)
+        if (tool.Brush == false)
         {
-            tool.Activate();
+            tool.ActivateAsync();
             return;
         }
 
         currentTool.Deactivate();
         currentTool = tool;
-        currentTool.Activate();
+        currentTool.ActivateAsync();
     }
 }

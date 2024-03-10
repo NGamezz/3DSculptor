@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ChangeSizeTool : Tool
 {
-    public override void Activate ()
+    public override void ActivateAsync ()
     {
         throw new System.NotImplementedException();
     }

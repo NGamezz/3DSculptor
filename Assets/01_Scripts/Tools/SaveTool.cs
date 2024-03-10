@@ -1,70 +1,90 @@
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class SaveTool : Tool
 {
     [SerializeField] private GameObject modelObject;
     private Mesh mesh;
 
+    private MeshCreator meshCreator;
+
     private string path = "";
 
-    private void Awake ()
+    private void Awake()
     {
-        if ( modelObject == null )
+        if (modelObject == null)
             mesh = FindAnyObjectByType<ChunksHolder>().GatherMeshes();
+
+        if (meshCreator == null)
+            meshCreator = FindAnyObjectByType<MeshCreator>();
     }
 
-    private void Start ()
-    {
-        Utility = true;
-    }
-
-    public override void Activate ()
+    public override async void ActivateAsync()
     {
         Debug.Log("Activate Save.");
 
-        VoxelHolder data = new();
+        //VoxelHolder data = new();
 
-        if ( mesh == null )
+        //var data = new SaveData<Texture2D>();
+        var texture = meshCreator.GetRenderTexture();
+
+        Texture2D tex = new(texture.width, texture.height, TextureFormat.RGB24, false);
+        RenderTexture.active = texture;
+
+        var request = await AsyncGPUReadback.RequestAsync(texture);
+
+        request.WaitForCompletion();
+
+        //tex.LoadRawTextureData(request.GetData<uint>());
+        //tex.Apply();
+        //byte[] bytes = tex.EncodeToPNG();
+
+        //System.IO.File.WriteAllBytes(Path.Combine(Application.persistentDataPath, "TestFile.png"), bytes);
+
+        //if (mesh == null)
+        //{
+        //    mesh = modelObject.GetComponent<MeshFilter>().mesh;
+        //    if (mesh == null)
+        //    {
+        //        throw new System.Exception("Selected model has no MeshFilter.");
+        //    }
+        //}
+
+        SaveData<byte[]> data = new();
+        var nativeArray = request.GetData<byte>();
+
+        byte[] newArray = new byte[nativeArray.Length];
+        for (int i = 0; i < newArray.Length; i++)
         {
-            mesh = modelObject.GetComponent<MeshFilter>().mesh;
-            if ( mesh == null )
-            {
-                throw new System.Exception("Selected model has no MeshFilter.");
-            }
+            newArray[i] = nativeArray[i];
         }
-        data.voxels = Vector3ArrayToFloat3(mesh.vertices);
+        nativeArray.Dispose();
+        data.data = newArray;
 
-        if ( path == "" )
+        if (path == "")
         {
             Debug.Log("Path does not exist yet.");
-            SimpleFileBrowser.FileBrowser.ShowSaveDialog(( path ) => HandleSave(path, data), null, SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
+            SimpleFileBrowser.FileBrowser.ShowSaveDialog((path) => HandleSave(path, data), null, SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
         }
         else
         {
             Debug.Log("Saving.");
-            CreateSaveFile.SaveToFile(data, data.version, path);
+            CreateSaveFile.SaveToFile(data, 0, path);
         }
     }
 
-    //Vector3's Aren't Serializable, float3's Are.
-    private float3[] Vector3ArrayToFloat3 ( Vector3[] array )
-    {
-        var newArray = new float3[array.Length];
-        for ( int i = 0; i < array.Length; i++ )
-        {
-            newArray[i] = array[i];
-        }
-        return newArray;
-    }
-
-    private void HandleSave ( string[] path, VoxelHolder data )
+    private void HandleSave<T>(string[] path, T data)
     {
         this.path = path[0];
         CreateSaveFile.SaveToFile(data, 0, this.path);
     }
 
-    public override void Deactivate ()
+    public override void Deactivate()
     {
     }
 }

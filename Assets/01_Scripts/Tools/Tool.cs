@@ -2,17 +2,17 @@ using UnityEngine;
 
 public abstract class Tool : MonoBehaviour
 {
-    public bool Utility = false;
+    public bool Brush = true;
 
     public string Name;
 
     [SerializeField] public KeyBind keyBind;
 
-    public abstract void Activate ();
-    public abstract void Deactivate ();
+    public abstract void ActivateAsync();
+    public abstract void Deactivate();
 }
 
 public interface ISizeChangable
 {
-    public abstract void ChangeSize (float size);
+    public abstract void ChangeSize(float size);
 }

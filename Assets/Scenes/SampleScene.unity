@@ -338,7 +338,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   numChunks: 10
-  numPointsPerAxis: 70
+  numPointsPerAxis: 20
   boundsSize: 200
   isoLevel: 0
   useFlatShading: 0
@@ -347,7 +347,6 @@ MonoBehaviour:
   editCompute: {fileID: 7200000, guid: 865b82eeee4482a4eae431180e801a76, type: 3}
   material: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
   rawDensityTexture: {fileID: 0}
-  processedDensityTexture: {fileID: 0}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -434,7 +433,7 @@ Transform:
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -20}
+  m_LocalPosition: {x: 0, y: 0, z: -170}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -504,6 +503,7 @@ GameObject:
   - component: {fileID: 1895845144}
   - component: {fileID: 1895845147}
   - component: {fileID: 1895845148}
+  - component: {fileID: 1895845149}
   m_Layer: 6
   m_Name: ToolsHolder
   m_TagString: Untagged
@@ -523,7 +523,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d090c4ea073a2c542b4fef08bd57d6c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Utility: 0
+  Brush: 1
   Name: Cube
   keyBind:
     keyCodes: 6100000073000000
@@ -543,7 +543,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a13c4377505fda4bb526f6ee43509b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Utility: 0
+  Brush: 1
   Name: Sphere
   keyBind:
     keyCodes: 09000000
@@ -578,7 +578,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0880ab882de9fc45a159383c787de2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Utility: 1
+  Brush: 1
   Name: Save
   keyBind:
     keyCodes: 3201000073000000
@@ -596,6 +596,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   delayBetweenToolSelection: 0.5
+--- !u!114 &1895845149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895845143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 650e63c7a82b0ef4c836c3b1782f9e37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Brush: 1
+  Name: Load
+  keyBind:
+    keyCodes: 320100006c000000
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -21,22 +21,23 @@ public class Brush : Tool, ISizeChangable
 
     private MeshCreator meshCreator;
 
-    protected virtual void Awake ()
+    protected virtual void Awake()
     {
         camera = Camera.main;
         meshCreator = FindAnyObjectByType<MeshCreator>();
+        Brush = true;
         UpdateToolSize();
     }
 
-    public void ChangeSize ( float size )
+    public void ChangeSize(float size)
     {
         UpdateToolSize();
         this.size = size;
     }
 
-    protected void Perform ( Vector3 point, bool state )
+    protected void Perform(Vector3 point, bool state)
     {
-        if ( state )
+        if (state)
         {
             meshCreator.Terraform(point, -strength, this.size);
         }
@@ -46,19 +47,19 @@ public class Brush : Tool, ISizeChangable
         }
     }
 
-    protected void UpdateToolSize ()
+    protected void UpdateToolSize()
     {
         ghost.transform.localScale = Vector3.one * (this.size * 2.0f);
     }
 
-    public override void Activate ()
+    public override void ActivateAsync()
     {
         state = true;
         ghost.SetActive(true);
         Debug.Log("activated");
     }
 
-    public override void Deactivate ()
+    public override void Deactivate()
     {
         state = false;
         ghost.SetActive(false);
@@ -66,11 +67,11 @@ public class Brush : Tool, ISizeChangable
     }
 
     private RaycastHit[] results = new RaycastHit[1];
-    public void GetPositionOnModel ()
+    public void GetPositionOnModel()
     {
         var ray = camera.ScreenPointToRay(Input.mousePosition);
 
-        if ( Physics.RaycastNonAlloc(ray, results) == 0 || results[0].transform.gameObject.layer == ownLayer )
+        if (Physics.RaycastNonAlloc(ray, results) == 0 || results[0].transform.gameObject.layer == ownLayer)
         {
             targetPosition = Vector3.zero;
             return;

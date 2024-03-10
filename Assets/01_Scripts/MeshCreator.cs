@@ -1,4 +1,9 @@
+using Microsoft.SqlServer.Server;
+using System;
+using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 //Original Version Was Created By Sebastian Lague, and can be found in the "External" Folder.
 public class MeshCreator : MonoBehaviour
@@ -17,30 +22,44 @@ public class MeshCreator : MonoBehaviour
     public ComputeShader editCompute;
     public Material material;
 
+    private List<GameObject> meshHolders = new();
+
     // Private
     ComputeBuffer triangleBuffer;
     ComputeBuffer triCountBuffer;
     [HideInInspector] public RenderTexture rawDensityTexture;
-    [HideInInspector] public RenderTexture processedDensityTexture;
     Chunk[] chunks;
 
     VertexData[] vertexDataArray;
 
-    RenderTexture originalMap;
-
-    void Start ()
+    void Start()
     {
-        InitTextures();
-        CreateBuffers();
-
-        CreateChunks();
-        GenerateAllChunks();
-
-        ComputeHelper.CreateRenderTexture3D(ref originalMap, processedDensityTexture);
-        ComputeHelper.CopyRenderTexture3D(processedDensityTexture, originalMap);
+        Run();
     }
 
-    void InitTextures ()
+    public RenderTexture GetRenderTexture()
+    {
+        return rawDensityTexture;
+    }
+
+    private void Run(RenderTexture texture = null, bool load = false)
+    {
+        InitTextures(texture);
+
+        Debug.Log("Creating Buffers.");
+        CreateBuffers();
+
+        //modelData.vertexData = new VoxelHolder[numChunks][];
+        //modelData.numVertices = new int[numChunks];
+        //modelData.useFlatShading = new bool[numChunks];
+
+        Debug.Log("Creating Chunks.");
+        CreateChunks();
+
+        GenerateAllChunks(load);
+    }
+
+    void InitTextures(RenderTexture texture = null)
     {
         // Explanation of texture size:
         // Each pixel maps to one point.
@@ -48,8 +67,18 @@ public class MeshCreator : MonoBehaviour
         // The last points of each chunk overlap in space with the first points of the next chunk
         // Therefore we need one fewer pixel than points for each added chunk
         int size = numChunks * (numPointsPerAxis - 1) + 1;
-        Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
-        Create3DTexture(ref processedDensityTexture, size, "Processed Density Texture");
+
+        if (texture == null)
+        {
+            Debug.Log("Creating Texture.");
+            Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
+        }
+        else
+        {
+            //rawDensityTexture = texture;
+            Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
+            Graphics.Blit(texture, rawDensityTexture);
+        }
 
         // Set textures on compute shaders
         densityCompute.SetTexture(0, "DensityTexture", rawDensityTexture);
@@ -57,17 +86,58 @@ public class MeshCreator : MonoBehaviour
         meshCompute.SetTexture(0, "DensityTexture", rawDensityTexture);
     }
 
-    void GenerateAllChunks ()
+    void GenerateAllChunks(bool load)
     {
-        ComputeDensity();
+        if (!load)
+            ComputeDensity();
 
-        for ( int i = 0; i < chunks.Length; i++ )
+        for (int i = 0; i < chunks.Length; i++)
         {
-            GenerateChunk(chunks[i]);
+            GenerateChunk(chunks[i], i);
         }
     }
 
-    void ComputeDensity ()
+    private void DeleteChunks()
+    {
+        if (chunks.Length < 1)
+            return;
+
+        int amountOfChunks = numChunks * 3;
+
+        for (int i = 0; i < amountOfChunks; i++)
+        {
+            var chunk = chunks[i];
+            chunk.Release();
+
+            var meshHolder = meshHolders[i];
+            meshHolders.Remove(meshHolder);
+            Destroy(meshHolder);
+        }
+    }
+
+    public void LoadVertices(byte[] vertexData)
+    {
+        //Mesh mesh = new();
+
+        //mesh.SetUVs(0, Utility.Float2ToVector2(vertexData.uvs));
+        //mesh.vertices = Utility.Float3ToVector3(vertexData.voxels);
+        //mesh.triangles = vertexData.triangles;
+
+        DeleteChunks();
+        ReleaseBuffers();
+
+        var tex = new Texture3D(2, 2, 2, TextureFormat.ARGB32, false);
+        tex.SetPixelData(vertexData, 0, 0);
+        tex.Apply();
+
+        RenderTexture rTex = new(tex.width, tex.height, 0);
+        Graphics.Blit(tex, rTex);
+        RenderTexture.active = rTex;
+
+        Run(rTex, true);
+    }
+
+    void ComputeDensity()
     {
         // Get points (each point is a vector4: xyz = position, w = density)
         int textureSize = rawDensityTexture.width;
@@ -78,13 +148,13 @@ public class MeshCreator : MonoBehaviour
         ComputeHelper.Dispatch(densityCompute, textureSize, textureSize, textureSize);
     }
 
-    void GenerateChunk ( Chunk chunk )
+    void GenerateChunk(Chunk chunk, int index)
     {
         // Marching cubes
         int numVoxelsPerAxis = numPointsPerAxis - 1;
         int marchKernel = 0;
 
-        meshCompute.SetInt("textureSize", processedDensityTexture.width);
+        meshCompute.SetInt("textureSize", rawDensityTexture.width);
         meshCompute.SetInt("numPointsPerAxis", numPointsPerAxis);
         meshCompute.SetFloat("isoLevel", isoLevel);
         meshCompute.SetFloat("planetSize", boundsSize);
@@ -108,10 +178,39 @@ public class MeshCreator : MonoBehaviour
         // Fetch vertex data from GPU
         triangleBuffer.GetData(vertexDataArray, 0, 0, numVertices);
 
+        //VoxelHolder[] holder = VertexDataToVoxelHolder(vertexDataArray);
+
+        //modelData.vertexData[index] = holder;
+
         chunk.CreateMesh(vertexDataArray, numVertices, useFlatShading);
     }
 
-    void CreateBuffers ()
+    //private ModelData modelData = new();
+
+    private VoxelHolder[] VertexDataToVoxelHolder(VertexData[] vertexData)
+    {
+        VoxelHolder[] voxelHolder = new VoxelHolder[vertexData.Length];
+
+        for (int i = 0; i < vertexData.Length; i++)
+        {
+            var voxHolder = new VoxelHolder();
+            voxHolder.position = vertexData[i].position;
+            voxHolder.normal = vertexData[i].normal;
+            voxHolder.id = vertexData[i].id;
+            voxelHolder[i] = voxHolder;
+        }
+        return voxelHolder;
+    }
+
+    [Serializable]
+    public class ModelData
+    {
+        public VoxelHolder[][] vertexData;
+        public int[] numVertices;
+        public bool[] useFlatShading;
+    }
+
+    void CreateBuffers()
     {
         int numVoxelsPerAxis = numPointsPerAxis - 1;
         int numVoxels = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
@@ -123,31 +222,31 @@ public class MeshCreator : MonoBehaviour
         vertexDataArray = new VertexData[maxVertexCount];
     }
 
-    void ReleaseBuffers ()
+    void ReleaseBuffers()
     {
         ComputeHelper.Release(triangleBuffer, triCountBuffer);
     }
 
-    void OnDestroy ()
+    void OnDestroy()
     {
         ReleaseBuffers();
-        foreach ( var chunk in chunks )
+        foreach (var chunk in chunks)
         {
             chunk.Release();
         }
     }
 
-    void CreateChunks ()
+    void CreateChunks()
     {
         chunks = new Chunk[numChunks * numChunks * numChunks];
         float chunkSize = (boundsSize) / numChunks;
         int i = 0;
 
-        for ( int y = 0; y < numChunks; y++ )
+        for (int y = 0; y < numChunks; y++)
         {
-            for ( int x = 0; x < numChunks; x++ )
+            for (int x = 0; x < numChunks; x++)
             {
-                for ( int z = 0; z < numChunks; z++ )
+                for (int z = 0; z < numChunks; z++)
                 {
                     float posX = (-(numChunks - 1f) / 2 + x) * chunkSize;
                     float posY = (-(numChunks - 1f) / 2 + y) * chunkSize;
@@ -157,6 +256,8 @@ public class MeshCreator : MonoBehaviour
                     GameObject meshHolder = new($"Chunk ({x}, {y}, {z})");
                     meshHolder.transform.parent = transform;
                     meshHolder.layer = gameObject.layer;
+
+                    meshHolders.Add(meshHolder);
 
                     Chunk chunk = new(new Vector3Int(x, y, z), centre, chunkSize, numPointsPerAxis, meshHolder);
                     chunk.SetMaterial(material);
@@ -168,7 +269,7 @@ public class MeshCreator : MonoBehaviour
     }
 
     //Todo: Potentially optimize it so it doesn't have to check every chunk for a sphere intersection.
-    public void Terraform ( Vector3 point, float weight, float radius )
+    public void Terraform(Vector3 point, float weight, float radius)
     {
         int editTextureSize = rawDensityTexture.width;
         float editPixelWorldSize = boundsSize / editTextureSize;
@@ -191,23 +292,23 @@ public class MeshCreator : MonoBehaviour
         ComputeHelper.Dispatch(editCompute, editTextureSize, editTextureSize, editTextureSize);
 
         float worldRadius = (editRadius + 1) * editPixelWorldSize;
-        for ( int i = 0; i < chunks.Length; i++ )
+        for (int i = 0; i < chunks.Length; i++)
         {
             var chunk = chunks[i];
-            if ( MathUtility.SphereIntersectsBox(point, worldRadius, chunk.centre, Vector3.one * chunk.size) )
+            if (MathUtility.SphereIntersectsBox(point, worldRadius, chunk.centre, Vector3.one * chunk.size))
             {
                 chunk.terra = true;
-                GenerateChunk(chunk);
+                GenerateChunk(chunk, i);
             }
         }
     }
 
-    void Create3DTexture ( ref RenderTexture texture, int size, string name )
+    void Create3DTexture(ref RenderTexture texture, int size, string name)
     {
         var format = UnityEngine.Experimental.Rendering.GraphicsFormat.R32_SFloat;
-        if ( texture == null || !texture.IsCreated() || texture.width != size || texture.height != size || texture.volumeDepth != size || texture.graphicsFormat != format )
+        if (texture == null || !texture.IsCreated() || texture.width != size || texture.height != size || texture.volumeDepth != size || texture.graphicsFormat != format)
         {
-            if ( texture != null )
+            if (texture != null)
             {
                 texture.Release();
             }
