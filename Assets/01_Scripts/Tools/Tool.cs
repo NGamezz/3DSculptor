@@ -8,7 +8,7 @@ public abstract class Tool : MonoBehaviour
 
     [SerializeField] public KeyBind keyBind;
 
-    public abstract void ActivateAsync();
+    public abstract void Activate(Brush previousTool);
     public abstract void Deactivate();
 }
 

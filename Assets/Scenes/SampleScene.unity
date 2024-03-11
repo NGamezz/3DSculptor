@@ -291,6 +291,7 @@ GameObject:
   - component: {fileID: 828002947}
   - component: {fileID: 828002948}
   - component: {fileID: 828002949}
+  - component: {fileID: 828002950}
   m_Layer: 0
   m_Name: Model
   m_TagString: Untagged
@@ -347,6 +348,18 @@ MonoBehaviour:
   editCompute: {fileID: 7200000, guid: 865b82eeee4482a4eae431180e801a76, type: 3}
   material: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
   rawDensityTexture: {fileID: 0}
+--- !u!114 &828002950
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 828002945}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d285104fda645e4b8397778eea29f74, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -504,6 +517,9 @@ GameObject:
   - component: {fileID: 1895845147}
   - component: {fileID: 1895845148}
   - component: {fileID: 1895845149}
+  - component: {fileID: 1895845150}
+  - component: {fileID: 1895845154}
+  - component: {fileID: 1895845153}
   m_Layer: 6
   m_Name: ToolsHolder
   m_TagString: Untagged
@@ -578,11 +594,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0880ab882de9fc45a159383c787de2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Brush: 1
+  Brush: 0
   Name: Save
   keyBind:
     keyCodes: 3201000073000000
-  modelObject: {fileID: 0}
+  modelObject: {fileID: 828002945}
 --- !u!114 &1895845148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -595,7 +611,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67463bbccb2b74243a3628bdb87d9747, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  delayBetweenToolSelection: 0.5
+  delayBetweenToolSelection: 0.2
 --- !u!114 &1895845149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -608,10 +624,61 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 650e63c7a82b0ef4c836c3b1782f9e37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Brush: 1
+  Brush: 0
   Name: Load
   keyBind:
     keyCodes: 320100006c000000
+--- !u!114 &1895845150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895845143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e08c2a3805877244ba18df0e57a7091, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Brush: 0
+  Name: Undo
+  keyBind:
+    keyCodes: 3201000061000000
+  undo: 1
+--- !u!114 &1895845153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895845143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53f454603714fd149a3a2ba98ef22cf8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Brush: 1
+  Name: Decrease Size
+  keyBind:
+    keyCodes: 0d010000
+  increment: -0.5
+--- !u!114 &1895845154
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895845143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53f454603714fd149a3a2ba98ef22cf8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Brush: 1
+  Name: Increase Size
+  keyBind:
+    keyCodes: 0e010000
+  increment: 0.5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

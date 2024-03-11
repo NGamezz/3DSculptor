@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine;
 
 public class ToolHandler : MonoBehaviour
@@ -27,7 +28,7 @@ public class ToolHandler : MonoBehaviour
         if (currentTool == null)
             currentTool = tools[0];
 
-        currentTool.ActivateAsync();
+        currentTool.Activate(null);
     }
 
     private void FixedUpdate()
@@ -61,17 +62,17 @@ public class ToolHandler : MonoBehaviour
 
     private void SwitchCallback(Tool tool)
     {
-        if (tool == currentTool)
-            return;
-
         if (tool.Brush == false)
         {
-            tool.ActivateAsync();
+            tool.Activate((Brush)currentTool);
             return;
         }
 
+        if (tool == currentTool)
+            return;
+
         currentTool.Deactivate();
         currentTool = tool;
-        currentTool.ActivateAsync();
+        currentTool.Activate(null);
     }
 }

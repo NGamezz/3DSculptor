@@ -5,7 +5,7 @@ public class LoadTool : Tool
 {
     private MeshCreator meshCreator;
 
-    public override void ActivateAsync()
+    public override void Activate(Brush previousBrush)
     {
         LoadSaveFile.LoadFileAsync<byte[]>((data) => HandleLoad(data));
     }

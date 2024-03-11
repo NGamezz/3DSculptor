@@ -1,9 +1,5 @@
-using Microsoft.SqlServer.Server;
-using System;
 using System.Collections.Generic;
-using Unity.Collections;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 //Original Version Was Created By Sebastian Lague, and can be found in the "External" Folder.
 public class MeshCreator : MonoBehaviour
@@ -49,10 +45,6 @@ public class MeshCreator : MonoBehaviour
         Debug.Log("Creating Buffers.");
         CreateBuffers();
 
-        //modelData.vertexData = new VoxelHolder[numChunks][];
-        //modelData.numVertices = new int[numChunks];
-        //modelData.useFlatShading = new bool[numChunks];
-
         Debug.Log("Creating Chunks.");
         CreateChunks();
 
@@ -75,7 +67,6 @@ public class MeshCreator : MonoBehaviour
         }
         else
         {
-            //rawDensityTexture = texture;
             Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
             Graphics.Blit(texture, rawDensityTexture);
         }
@@ -93,7 +84,7 @@ public class MeshCreator : MonoBehaviour
 
         for (int i = 0; i < chunks.Length; i++)
         {
-            GenerateChunk(chunks[i], i);
+            GenerateChunk(chunks[i]);
         }
     }
 
@@ -117,12 +108,6 @@ public class MeshCreator : MonoBehaviour
 
     public void LoadVertices(byte[] vertexData)
     {
-        //Mesh mesh = new();
-
-        //mesh.SetUVs(0, Utility.Float2ToVector2(vertexData.uvs));
-        //mesh.vertices = Utility.Float3ToVector3(vertexData.voxels);
-        //mesh.triangles = vertexData.triangles;
-
         DeleteChunks();
         ReleaseBuffers();
 
@@ -148,7 +133,7 @@ public class MeshCreator : MonoBehaviour
         ComputeHelper.Dispatch(densityCompute, textureSize, textureSize, textureSize);
     }
 
-    void GenerateChunk(Chunk chunk, int index)
+    void GenerateChunk(Chunk chunk)
     {
         // Marching cubes
         int numVoxelsPerAxis = numPointsPerAxis - 1;
@@ -170,7 +155,6 @@ public class MeshCreator : MonoBehaviour
         int[] vertexCountData = new int[1];
         triCountBuffer.SetData(vertexCountData);
         ComputeBuffer.CopyCount(triangleBuffer, triCountBuffer, 0);
-
         triCountBuffer.GetData(vertexCountData);
 
         int numVertices = vertexCountData[0] * 3;
@@ -178,36 +162,7 @@ public class MeshCreator : MonoBehaviour
         // Fetch vertex data from GPU
         triangleBuffer.GetData(vertexDataArray, 0, 0, numVertices);
 
-        //VoxelHolder[] holder = VertexDataToVoxelHolder(vertexDataArray);
-
-        //modelData.vertexData[index] = holder;
-
         chunk.CreateMesh(vertexDataArray, numVertices, useFlatShading);
-    }
-
-    //private ModelData modelData = new();
-
-    private VoxelHolder[] VertexDataToVoxelHolder(VertexData[] vertexData)
-    {
-        VoxelHolder[] voxelHolder = new VoxelHolder[vertexData.Length];
-
-        for (int i = 0; i < vertexData.Length; i++)
-        {
-            var voxHolder = new VoxelHolder();
-            voxHolder.position = vertexData[i].position;
-            voxHolder.normal = vertexData[i].normal;
-            voxHolder.id = vertexData[i].id;
-            voxelHolder[i] = voxHolder;
-        }
-        return voxelHolder;
-    }
-
-    [Serializable]
-    public class ModelData
-    {
-        public VoxelHolder[][] vertexData;
-        public int[] numVertices;
-        public bool[] useFlatShading;
     }
 
     void CreateBuffers()
@@ -230,10 +185,7 @@ public class MeshCreator : MonoBehaviour
     void OnDestroy()
     {
         ReleaseBuffers();
-        foreach (var chunk in chunks)
-        {
-            chunk.Release();
-        }
+        DeleteChunks();
     }
 
     void CreateChunks()
@@ -268,6 +220,8 @@ public class MeshCreator : MonoBehaviour
         }
     }
 
+    private Dictionary<Vector3, Chunk> chunkDictionary = new();
+
     //Todo: Potentially optimize it so it doesn't have to check every chunk for a sphere intersection.
     public void Terraform(Vector3 point, float weight, float radius)
     {
@@ -298,7 +252,7 @@ public class MeshCreator : MonoBehaviour
             if (MathUtility.SphereIntersectsBox(point, worldRadius, chunk.centre, Vector3.one * chunk.size))
             {
                 chunk.terra = true;
-                GenerateChunk(chunk, i);
+                GenerateChunk(chunk);
             }
         }
     }

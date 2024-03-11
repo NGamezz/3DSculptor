@@ -1,8 +1,3 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using Unity.Collections;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -24,7 +19,7 @@ public class SaveTool : Tool
             meshCreator = FindAnyObjectByType<MeshCreator>();
     }
 
-    public override async void ActivateAsync()
+    public override async void Activate(Brush previousTool )
     {
         Debug.Log("Activate Save.");
 
