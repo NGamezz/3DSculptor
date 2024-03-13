@@ -3,12 +3,12 @@ using System.IO;
 using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
-using Unity.VisualScripting;
-using System.Runtime.Serialization;
+using System.Xml;
 
 [Serializable]
 public class SaveData<T>
 {
+    public int buildVersion;
     public T data;
 }
 
@@ -18,9 +18,9 @@ public class CreateSaveFile
     {
         //var path = Path.Combine(Application.persistentDataPath, $"{fileName}-{version}.save");
 
-        var bFormatter = new BinaryFormatter();
+        //var bFormatter = new BinaryFormatter();
 
-        //var xmlFormatter = new XmlSerializer(thingToSave.GetType());
+        var xmlFormatter = new XmlSerializer(thingToSave.GetType());
 
         path += $"-{version}.save";
 
@@ -30,14 +30,14 @@ public class CreateSaveFile
             if (!File.Exists(path))
             {
                 stream = File.Create(path);
-                bFormatter.Serialize(stream, thingToSave);
                 //bFormatter.Serialize(stream, thingToSave);
+                xmlFormatter.Serialize(stream, thingToSave);
                 Debug.Log("Saved.");
             }
             else
             {
                 stream = File.Open(path, FileMode.Truncate);
-                bFormatter.Serialize(stream, thingToSave);
+                xmlFormatter.Serialize(stream, thingToSave);
                 //bFormatter.Serialize(stream, thingToSave);
                 Debug.Log("File Overwritten.");
             }

@@ -1,5 +1,9 @@
 using System.Collections.Generic;
+using System.IO;
+using Unity.Collections;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 //Original Version Was Created By Sebastian Lague, and can be found in the "External" Folder.
 public class MeshCreator : MonoBehaviour
@@ -38,37 +42,38 @@ public class MeshCreator : MonoBehaviour
         return rawDensityTexture;
     }
 
-    private void Run(RenderTexture texture = null, bool load = false)
+    private void Run(bool load = false)
     {
-        InitTextures(texture);
+        InitTextures(load);
 
-        Debug.Log("Creating Buffers.");
-        CreateBuffers();
+        if (triangleBuffer == null)
+        {
+            Debug.Log("Creating Buffers.");
+            CreateBuffers();
+        }
 
-        Debug.Log("Creating Chunks.");
-        CreateChunks();
+        if (!load)
+        {
+            Debug.Log("Creating Chunks.");
+            CreateChunks();
+        }
 
         GenerateAllChunks(load);
     }
 
-    void InitTextures(RenderTexture texture = null)
+    void InitTextures(bool load = false)
     {
         // Explanation of texture size:
         // Each pixel maps to one point.
         // Each chunk has "numPointsPerAxis" points along each axis
         // The last points of each chunk overlap in space with the first points of the next chunk
         // Therefore we need one fewer pixel than points for each added chunk
-        int size = numChunks * (numPointsPerAxis - 1) + 1;
 
-        if (texture == null)
+        if (!load)
         {
+            int size = numChunks * (numPointsPerAxis - 1) + 1;
             Debug.Log("Creating Texture.");
             Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
-        }
-        else
-        {
-            Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
-            Graphics.Blit(texture, rawDensityTexture);
         }
 
         // Set textures on compute shaders
@@ -90,19 +95,107 @@ public class MeshCreator : MonoBehaviour
 
     private void DeleteChunks()
     {
-        if (chunks.Length < 1)
+        if (meshHolders.Count < 1)
             return;
 
-        int amountOfChunks = numChunks * 3;
+        int amount = numChunks * numChunks * numChunks;
 
-        for (int i = 0; i < amountOfChunks; i++)
+        for (int i = amount - 1; i > 0; i--)
         {
-            var chunk = chunks[i];
-            chunk.Release();
+            if (i < chunks.Length)
+            {
+                var chunk = chunks[i];
+                chunk.Release();
+            }
 
-            var meshHolder = meshHolders[i];
-            meshHolders.Remove(meshHolder);
-            Destroy(meshHolder);
+            if (i < meshHolders.Count)
+            {
+                var meshHolder = meshHolders[i];
+                meshHolders.Remove(meshHolder);
+
+                Destroy(meshHolder);
+            }
+        }
+    }
+
+    private RenderTexture testCache;
+
+    private NativeArray<byte> bytes;
+    private SaveData<byte[]> data;
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            //RenderTexture.active = rawDensityTexture;
+
+            //var request = await AsyncGPUReadback.RequestAsync(rawDensityTexture);
+            //request.WaitForCompletion();
+
+
+            ////if (request.hasError)
+            ////{
+            ////    Debug.Log("Request Has Error.");
+            ////}
+
+            //bytes = request.GetData<byte>();
+
+            //var test = new Texture2D(rawDensityTexture.width, rawDensityTexture.height);
+
+            //test.ReadPixels(new Rect(0, 0, rawDensityTexture.width, rawDensityTexture.height), 0, 0);
+
+            //var array = test.GetRawTextureData();
+
+            //Debug.Log(array.Length);
+
+            //byte[] byt = new byte[bytes.Length];
+
+            //for (int i = 0; i < bytes.Length; i++)
+            //{
+            //    byt[i] = bytes[i];
+            //}
+
+            //Debug.Log(bytes.Length);
+
+            //while (!Input.GetKeyDown(KeyCode.L))
+            //{
+            //    await Awaitable.NextFrameAsync();
+            //}
+
+            var tex = new Texture2D(rawDensityTexture.width, rawDensityTexture.height);
+
+            tex.ReadPixels(new Rect(0, 0, rawDensityTexture.width, rawDensityTexture.height), 0, 0);
+            tex.Apply();
+
+            var bytes2 = tex.EncodeToPNG();
+
+            File.WriteAllBytes(Path.Join(Application.dataPath, "hello.png"), bytes2);
+
+            AssetDatabase.Refresh();
+
+            //RenderTexture.active = rawDensityTexture;
+
+            //rawDensityTexture.Release();
+
+            //int size = numChunks * (numPointsPerAxis - 1) + 1;
+            //Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
+
+            //Graphics.Blit(tex, rawDensityTexture);
+
+            //newNative.Dispose();
+
+            //DeleteChunks();
+            //ReleaseBuffers();
+
+            //ComputeDensity();
+
+            //GenerateAllChunks(true);
+
+            //Run(true);
+        }
+
+        if (Input.GetKeyDown(KeyCode.L))
+        {
         }
     }
 
@@ -111,19 +204,32 @@ public class MeshCreator : MonoBehaviour
         DeleteChunks();
         ReleaseBuffers();
 
-        var tex = new Texture3D(2, 2, 2, TextureFormat.ARGB32, false);
-        tex.SetPixelData(vertexData, 0, 0);
+        rawDensityTexture.DiscardContents();
+
+        int size = numChunks * (numPointsPerAxis - 1) + 1;
+        Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
+
+        NativeArray<byte> bytes = new(vertexData.Length, Allocator.Temp);
+
+        for (int i = 0; i < vertexData.Length; i++)
+        {
+            bytes[i] = vertexData[i];
+        }
+
+        var tex = new Texture2D(2, 2);
+        tex.LoadRawTextureData<byte>(bytes);
         tex.Apply();
 
-        RenderTexture rTex = new(tex.width, tex.height, 0);
-        Graphics.Blit(tex, rTex);
-        RenderTexture.active = rTex;
+        RenderTexture.active = rawDensityTexture;
+        Graphics.Blit(tex, rawDensityTexture);
 
-        Run(rTex, true);
+        Run(true);
     }
 
     void ComputeDensity()
     {
+        Debug.Log("Compute Density.");
+
         // Get points (each point is a vector4: xyz = position, w = density)
         int textureSize = rawDensityTexture.width;
 

@@ -39,7 +39,6 @@ public class Chunk
         filter = meshHolder.AddComponent<MeshFilter>();
         renderer = meshHolder.AddComponent<MeshRenderer>();
 
-
         filter.mesh = mesh;
         collider = renderer.gameObject.AddComponent<MeshCollider>();
 

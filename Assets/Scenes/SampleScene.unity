@@ -598,7 +598,6 @@ MonoBehaviour:
   Name: Save
   keyBind:
     keyCodes: 3201000073000000
-  modelObject: {fileID: 828002945}
 --- !u!114 &1895845148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -624,7 +623,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 650e63c7a82b0ef4c836c3b1782f9e37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Brush: 0
+  Brush: 1
   Name: Load
   keyBind:
     keyCodes: 320100006c000000

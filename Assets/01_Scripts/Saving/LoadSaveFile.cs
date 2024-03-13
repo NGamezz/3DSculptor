@@ -10,7 +10,8 @@ public class LoadSaveFile
     private static void HandleLoad<T>(string[] path, Action<byte[]> uponRetrieval)
     {
         //var xmlFormatter = new XmlSerializer(typeof(SaveData<byte[]>));
-        var bFormatter = new BinaryFormatter();
+        //var bFormatter = new BinaryFormatter();
+        var xmlFormatter = new XmlSerializer(typeof(SaveData<T>));
         byte[] data;
         FileStream stream = null;
         try
@@ -19,7 +20,7 @@ public class LoadSaveFile
 
             stream = File.Open(path[0], FileMode.Open);
 
-            var saveData = (SaveData<byte[]>)bFormatter.Deserialize(stream);
+            var saveData = (SaveData<byte[]>)xmlFormatter.Deserialize(stream);
 
             data = saveData.data;
             //data = File.ReadAllBytes(path[0]);
