@@ -1,41 +1,34 @@
 using System;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Xml.Serialization;
-using Unity.Collections;
 using UnityEngine;
 
 public class LoadSaveFile
 {
-    private static void HandleLoad<T>(string[] path, Action<byte[]> uponRetrieval)
+    private static void HandleLoad<T, U> ( string[] path, Action<SaveData<T, U>> uponRetrieval )
     {
-        //var xmlFormatter = new XmlSerializer(typeof(SaveData<byte[]>));
-        //var bFormatter = new BinaryFormatter();
-        var xmlFormatter = new XmlSerializer(typeof(SaveData<T>));
-        byte[] data;
+        var bFormatter = new BinaryFormatter();
         FileStream stream = null;
         try
         {
-            if (!File.Exists(path[0])) { throw new IOException("File Doesn't Exist."); }
+            if ( !File.Exists(path[0]) )
+            { throw new IOException("File Doesn't Exist."); }
 
             stream = File.Open(path[0], FileMode.Open);
 
-            var saveData = (SaveData<byte[]>)xmlFormatter.Deserialize(stream);
+            var saveData = (SaveData<T, U>)bFormatter.Deserialize(stream);
 
-            data = saveData.data;
-            //data = File.ReadAllBytes(path[0]);
+            DataHolder.SaveVersion = saveData.saveVersion;
 
-            uponRetrieval?.Invoke(data);
-            //stream = File.OpenRead(path[0]);
-            //data = (T)bFormatter.Deserialize(stream);
+            uponRetrieval?.Invoke(saveData);
         }
-        catch (IOException e)
+        catch ( IOException e )
         {
             Debug.Log(e.Message);
         }
         finally
         {
-            if (stream != null)
+            if ( stream != null )
             {
                 stream.Flush();
                 stream.Close();
@@ -43,37 +36,8 @@ public class LoadSaveFile
         }
     }
 
-    //private static void HandleLoad<T>(string[] path, Action<T> uponRetrieval)
-    //{
-    //    var bFormatter = new BinaryFormatter();
-    //    var data = default(T);
-    //    FileStream stream = null;
-    //    try
-    //    {
-    //        if (!File.Exists(path[0])) { throw new IOException("File Doesn't Exist."); }
-
-    //        byte[] bytes = File.ReadAllBytes(path[0]);
-
-    //        //stream = File.OpenRead(path[0]);
-    //        //data = (T)bFormatter.Deserialize(stream);
-    //    }
-    //    catch (IOException e)
-    //    {
-    //        Debug.Log(e.Message);
-    //    }
-    //    finally
-    //    {
-    //        if (stream != null)
-    //        {
-    //            stream.Flush();
-    //            stream.Close();
-    //        }
-    //    }
-    //    uponRetrieval?.Invoke(data);
-    //}
-
-    public static void LoadFileAsync<T>(Action<byte[]> uponRetrieval)
+    public static void LoadFileAsync<T, U> ( Action<SaveData<T, U>> uponRetrieval )
     {
-        SimpleFileBrowser.FileBrowser.ShowLoadDialog((path) => HandleLoad<T>(path, uponRetrieval), null, SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
+        SimpleFileBrowser.FileBrowser.ShowLoadDialog(( path ) => HandleLoad(path, uponRetrieval), null, SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
     }
 }

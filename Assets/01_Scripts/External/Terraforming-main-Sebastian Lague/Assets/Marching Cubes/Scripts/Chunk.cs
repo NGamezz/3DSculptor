@@ -9,7 +9,6 @@ public class Chunk
     public Mesh mesh;
 
     public ComputeBuffer pointsBuffer;
-    int numPointsPerAxis;
     public MeshFilter filter;
     MeshRenderer renderer;
     MeshCollider collider;
@@ -27,10 +26,11 @@ public class Chunk
         this.id = coord;
         this.centre = centre;
         this.size = size;
-        this.numPointsPerAxis = numPointsPerAxis;
 
-        mesh = new Mesh();
-        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        mesh = new Mesh
+        {
+            indexFormat = UnityEngine.Rendering.IndexFormat.UInt32
+        };
 
         int numPointsTotal = numPointsPerAxis * numPointsPerAxis * numPointsPerAxis;
         ComputeHelper.CreateStructuredBuffer<PointData>(ref pointsBuffer, numPointsTotal);
@@ -50,7 +50,6 @@ public class Chunk
 
     public void CreateMesh(VertexData[] vertexData, int numVertices, bool useFlatShading)
     {
-
         vertexIndexMap.Clear();
         processedVertices.Clear();
         processedNormals.Clear();

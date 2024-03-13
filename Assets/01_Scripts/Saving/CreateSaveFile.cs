@@ -2,53 +2,72 @@ using System;
 using System.IO;
 using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Xml.Serialization;
-using System.Xml;
 
 [Serializable]
-public class SaveData<T>
+public class SaveData<T, U>
 {
-    public int buildVersion;
+    public int buildVersion = 0;
+    public int saveVersion = 0;
     public T data;
+    public U dataB;
+}
+
+public struct VersionData
+{
+    public int version;
+    public bool overwrite;
+
+    public VersionData ( int version, bool overwrite )
+    {
+        this.version = version;
+        this.overwrite = overwrite;
+    }
 }
 
 public class CreateSaveFile
 {
-    public static void SaveToFile<T>(T thingToSave, int version, string path)
+    //Increase index if file exists, until index reaches max amount, then overwrite first file and continue as before.
+    public static void SaveToFile<T, U> ( ref SaveData<T, U> thingToSave, string path )
     {
-        //var path = Path.Combine(Application.persistentDataPath, $"{fileName}-{version}.save");
+        var bFormatter = new BinaryFormatter();
 
-        //var bFormatter = new BinaryFormatter();
+        string cachedPath = path;
 
-        var xmlFormatter = new XmlSerializer(thingToSave.GetType());
+        var version = 0;
 
         path += $"-{version}.save";
+
+        Debug.Log(version);
 
         FileStream stream = null;
         try
         {
-            if (!File.Exists(path))
+            if ( !File.Exists(path) )
             {
+                DataHolder.SaveVersion = 0;
+
+                thingToSave.saveVersion = 0;
+
                 stream = File.Create(path);
-                //bFormatter.Serialize(stream, thingToSave);
-                xmlFormatter.Serialize(stream, thingToSave);
+                bFormatter.Serialize(stream, thingToSave);
                 Debug.Log("Saved.");
             }
             else
             {
-                stream = File.Open(path, FileMode.Truncate);
-                xmlFormatter.Serialize(stream, thingToSave);
-                //bFormatter.Serialize(stream, thingToSave);
-                Debug.Log("File Overwritten.");
+                cachedPath += $"-{version + 1}.save";
+                thingToSave.saveVersion = version + 1;
+
+                stream = File.Create(path);
+                bFormatter.Serialize(stream, thingToSave);
             }
         }
-        catch (Exception e)
+        catch ( Exception e )
         {
             Debug.LogException(e);
         }
         finally
         {
-            if (stream != null)
+            if ( stream != null )
             {
                 stream.Flush();
                 stream.Close();

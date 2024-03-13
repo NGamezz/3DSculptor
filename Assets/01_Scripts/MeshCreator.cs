@@ -1,11 +1,9 @@
 using System.Collections.Generic;
-using System.IO;
-using Unity.Collections;
-using UnityEditor;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-//Original Version Was Created By Sebastian Lague, and can be found in the "External" Folder.
+//Original Version Was Created By Sebastian Lague, and can be found in the "External" Folder under the name of "GenTest".
 public class MeshCreator : MonoBehaviour
 {
     [Header("Init Settings")]
@@ -24,209 +22,122 @@ public class MeshCreator : MonoBehaviour
 
     private List<GameObject> meshHolders = new();
 
-    // Private
-    ComputeBuffer triangleBuffer;
-    ComputeBuffer triCountBuffer;
-    [HideInInspector] public RenderTexture rawDensityTexture;
-    Chunk[] chunks;
+    private ComputeBuffer triangleBuffer;
+    private ComputeBuffer triCountBuffer;
+    private Chunk[] chunks;
+    private RenderTexture rawDensityTexture;
 
-    VertexData[] vertexDataArray;
+    private VertexData[] vertexDataArray;
 
-    void Start()
+    void Start ()
     {
         Run();
     }
 
-    public RenderTexture GetRenderTexture()
+    public RenderTexture GetRenderTexture ()
     {
         return rawDensityTexture;
     }
 
-    private void Run(bool load = false)
+    private void Run ( bool load = false )
     {
         InitTextures(load);
 
-        if (triangleBuffer == null)
+        if ( (triangleBuffer == null || triCountBuffer == null || vertexDataArray == null) || (triangleBuffer.IsValid() == false || triangleBuffer.IsValid() == false) )
         {
             Debug.Log("Creating Buffers.");
             CreateBuffers();
         }
 
-        if (!load)
+        if ( chunks == null || chunks.Length < math.pow(numChunks, 3) )
         {
             Debug.Log("Creating Chunks.");
             CreateChunks();
         }
 
-        GenerateAllChunks(load);
+        if ( !load )
+        {
+            ComputeDensity();
+        }
+
+        GenerateAllChunks();
     }
 
-    void InitTextures(bool load = false)
+    void InitTextures ( bool load = false )
     {
-        // Explanation of texture size:
-        // Each pixel maps to one point.
-        // Each chunk has "numPointsPerAxis" points along each axis
-        // The last points of each chunk overlap in space with the first points of the next chunk
-        // Therefore we need one fewer pixel than points for each added chunk
-
-        if (!load)
+        if ( !load )
         {
-            int size = numChunks * (numPointsPerAxis - 1) + 1;
             Debug.Log("Creating Texture.");
+            int size = numChunks * (numPointsPerAxis - 1) + 1;
             Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
         }
 
-        // Set textures on compute shaders
         densityCompute.SetTexture(0, "DensityTexture", rawDensityTexture);
         editCompute.SetTexture(0, "EditTexture", rawDensityTexture);
         meshCompute.SetTexture(0, "DensityTexture", rawDensityTexture);
     }
 
-    void GenerateAllChunks(bool load)
+    void GenerateAllChunks ()
     {
-        if (!load)
-            ComputeDensity();
-
-        for (int i = 0; i < chunks.Length; i++)
+        for ( int i = 0; i < chunks.Length; i++ )
         {
             GenerateChunk(chunks[i]);
         }
     }
 
-    private void DeleteChunks()
+    private void DeleteChunks ()
     {
-        if (meshHolders.Count < 1)
+        if ( meshHolders.Count < 1 )
             return;
 
         int amount = numChunks * numChunks * numChunks;
 
-        for (int i = amount - 1; i > 0; i--)
+        for ( int i = amount - 1; i > 0; i-- )
         {
-            if (i < chunks.Length)
+            if ( i < chunks.Length )
             {
                 var chunk = chunks[i];
                 chunk.Release();
             }
 
-            if (i < meshHolders.Count)
+            if ( i < meshHolders.Count )
             {
                 var meshHolder = meshHolders[i];
-                meshHolders.Remove(meshHolder);
+                if ( meshHolder == null )
+                {
+                    meshHolders.RemoveAt(i);
+                    continue;
+                }
 
+                meshHolders.Remove(meshHolder);
                 Destroy(meshHolder);
             }
         }
     }
 
-    private RenderTexture testCache;
-
-    private NativeArray<byte> bytes;
-    private SaveData<byte[]> data;
-
-    private void Update()
+    public Mesh GetMesh ()
     {
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            //RenderTexture.active = rawDensityTexture;
-
-            //var request = await AsyncGPUReadback.RequestAsync(rawDensityTexture);
-            //request.WaitForCompletion();
-
-
-            ////if (request.hasError)
-            ////{
-            ////    Debug.Log("Request Has Error.");
-            ////}
-
-            //bytes = request.GetData<byte>();
-
-            //var test = new Texture2D(rawDensityTexture.width, rawDensityTexture.height);
-
-            //test.ReadPixels(new Rect(0, 0, rawDensityTexture.width, rawDensityTexture.height), 0, 0);
-
-            //var array = test.GetRawTextureData();
-
-            //Debug.Log(array.Length);
-
-            //byte[] byt = new byte[bytes.Length];
-
-            //for (int i = 0; i < bytes.Length; i++)
-            //{
-            //    byt[i] = bytes[i];
-            //}
-
-            //Debug.Log(bytes.Length);
-
-            //while (!Input.GetKeyDown(KeyCode.L))
-            //{
-            //    await Awaitable.NextFrameAsync();
-            //}
-
-            var tex = new Texture2D(rawDensityTexture.width, rawDensityTexture.height);
-
-            tex.ReadPixels(new Rect(0, 0, rawDensityTexture.width, rawDensityTexture.height), 0, 0);
-            tex.Apply();
-
-            var bytes2 = tex.EncodeToPNG();
-
-            File.WriteAllBytes(Path.Join(Application.dataPath, "hello.png"), bytes2);
-
-            AssetDatabase.Refresh();
-
-            //RenderTexture.active = rawDensityTexture;
-
-            //rawDensityTexture.Release();
-
-            //int size = numChunks * (numPointsPerAxis - 1) + 1;
-            //Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
-
-            //Graphics.Blit(tex, rawDensityTexture);
-
-            //newNative.Dispose();
-
-            //DeleteChunks();
-            //ReleaseBuffers();
-
-            //ComputeDensity();
-
-            //GenerateAllChunks(true);
-
-            //Run(true);
-        }
-
-        if (Input.GetKeyDown(KeyCode.L))
-        {
-        }
+        return default;
     }
 
-    public void LoadVertices(byte[] vertexData)
+    public void LoadVertices ( SaveData<float[], int3> saveData )
     {
-        DeleteChunks();
-        ReleaseBuffers();
+        var dimensions = saveData.dataB;
+        Texture3D depthTexture = new(dimensions.x, dimensions.y, dimensions.z, TextureFormat.RFloat, false);
 
-        rawDensityTexture.DiscardContents();
+        depthTexture.SetPixelData(saveData.data, 0);
+        depthTexture.Apply();
 
-        int size = numChunks * (numPointsPerAxis - 1) + 1;
-        Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
+        Graphics.CopyTexture(depthTexture, rawDensityTexture);
 
-        NativeArray<byte> bytes = new(vertexData.Length, Allocator.Temp);
+        Destroy(depthTexture);
 
-        for (int i = 0; i < vertexData.Length; i++)
-        {
-            bytes[i] = vertexData[i];
-        }
-
-        var tex = new Texture2D(2, 2);
-        tex.LoadRawTextureData<byte>(bytes);
-        tex.Apply();
-
-        RenderTexture.active = rawDensityTexture;
-        Graphics.Blit(tex, rawDensityTexture);
+        Debug.Log("Loaded.");
 
         Run(true);
     }
 
-    void ComputeDensity()
+    void ComputeDensity ()
     {
         Debug.Log("Compute Density.");
 
@@ -239,7 +150,7 @@ public class MeshCreator : MonoBehaviour
         ComputeHelper.Dispatch(densityCompute, textureSize, textureSize, textureSize);
     }
 
-    void GenerateChunk(Chunk chunk)
+    void GenerateChunk ( Chunk chunk )
     {
         // Marching cubes
         int numVoxelsPerAxis = numPointsPerAxis - 1;
@@ -271,7 +182,7 @@ public class MeshCreator : MonoBehaviour
         chunk.CreateMesh(vertexDataArray, numVertices, useFlatShading);
     }
 
-    void CreateBuffers()
+    void CreateBuffers ()
     {
         int numVoxelsPerAxis = numPointsPerAxis - 1;
         int numVoxels = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
@@ -283,28 +194,28 @@ public class MeshCreator : MonoBehaviour
         vertexDataArray = new VertexData[maxVertexCount];
     }
 
-    void ReleaseBuffers()
+    void ReleaseBuffers ()
     {
         ComputeHelper.Release(triangleBuffer, triCountBuffer);
     }
 
-    void OnDestroy()
+    void OnDestroy ()
     {
         ReleaseBuffers();
         DeleteChunks();
     }
 
-    void CreateChunks()
+    void CreateChunks ()
     {
         chunks = new Chunk[numChunks * numChunks * numChunks];
         float chunkSize = (boundsSize) / numChunks;
         int i = 0;
 
-        for (int y = 0; y < numChunks; y++)
+        for ( int y = 0; y < numChunks; y++ )
         {
-            for (int x = 0; x < numChunks; x++)
+            for ( int x = 0; x < numChunks; x++ )
             {
-                for (int z = 0; z < numChunks; z++)
+                for ( int z = 0; z < numChunks; z++ )
                 {
                     float posX = (-(numChunks - 1f) / 2 + x) * chunkSize;
                     float posY = (-(numChunks - 1f) / 2 + y) * chunkSize;
@@ -329,7 +240,7 @@ public class MeshCreator : MonoBehaviour
     private Dictionary<Vector3, Chunk> chunkDictionary = new();
 
     //Todo: Potentially optimize it so it doesn't have to check every chunk for a sphere intersection.
-    public void Terraform(Vector3 point, float weight, float radius)
+    public void Terraform ( Vector3 point, float weight, float radius )
     {
         int editTextureSize = rawDensityTexture.width;
         float editPixelWorldSize = boundsSize / editTextureSize;
@@ -352,10 +263,10 @@ public class MeshCreator : MonoBehaviour
         ComputeHelper.Dispatch(editCompute, editTextureSize, editTextureSize, editTextureSize);
 
         float worldRadius = (editRadius + 1) * editPixelWorldSize;
-        for (int i = 0; i < chunks.Length; i++)
+        for ( int i = 0; i < chunks.Length; i++ )
         {
             var chunk = chunks[i];
-            if (MathUtility.SphereIntersectsBox(point, worldRadius, chunk.centre, Vector3.one * chunk.size))
+            if ( MathUtility.SphereIntersectsBox(point, worldRadius, chunk.centre, Vector3.one * chunk.size) )
             {
                 chunk.terra = true;
                 GenerateChunk(chunk);
@@ -363,22 +274,22 @@ public class MeshCreator : MonoBehaviour
         }
     }
 
-    void Create3DTexture(ref RenderTexture texture, int size, string name)
+    void Create3DTexture ( ref RenderTexture texture, int size, string name )
     {
         var format = UnityEngine.Experimental.Rendering.GraphicsFormat.R32_SFloat;
-        if (texture == null || !texture.IsCreated() || texture.width != size || texture.height != size || texture.volumeDepth != size || texture.graphicsFormat != format)
+        if ( texture == null || !texture.IsCreated() || texture.width != size || texture.height != size || texture.volumeDepth != size || texture.graphicsFormat != format )
         {
-            if (texture != null)
+            if ( texture != null )
             {
                 texture.Release();
             }
-            const int numBitsInDepthBuffer = 0;
-            texture = new(size, size, numBitsInDepthBuffer)
+
+            texture = new(size, size, 0)
             {
-                graphicsFormat = format,
                 volumeDepth = size,
+                graphicsFormat = format,
                 enableRandomWrite = true,
-                dimension = UnityEngine.Rendering.TextureDimension.Tex3D
+                dimension = TextureDimension.Tex3D
             };
 
             texture.Create();

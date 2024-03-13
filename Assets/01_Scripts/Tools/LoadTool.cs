@@ -1,5 +1,4 @@
-using Unity.Collections;
-using UnityEngine;
+using Unity.Mathematics;
 
 public class LoadTool : Tool
 {
@@ -7,10 +6,10 @@ public class LoadTool : Tool
 
     public override void Activate(Brush previousBrush)
     {
-        LoadSaveFile.LoadFileAsync<byte[]>((data) => HandleLoad(data));
+        LoadSaveFile.LoadFileAsync<float[], int3>((data) => HandleLoad(data));
     }
 
-    private void HandleLoad(byte[] data)
+    private void HandleLoad ( SaveData<float[], int3> data)
     {
         meshCreator.LoadVertices(data);
     }

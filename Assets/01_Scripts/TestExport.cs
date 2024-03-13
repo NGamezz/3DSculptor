@@ -1,4 +1,3 @@
-using Unity.Mathematics;
 using UnityEngine;
 
 public class TestExport : MonoBehaviour
@@ -13,9 +12,6 @@ public class TestExport : MonoBehaviour
 
     public void Export ()
     {
-        CreateSaveFile.SaveToFile<float>(10, 0, "nonoExist");
-        LoadSaveFile.LoadFileAsync<float>(HandleSaveLoad);
-
         //Purely for testing.
         var chunkHolder = FindAnyObjectByType<ChunksHolder>();
 
@@ -26,11 +22,4 @@ public class TestExport : MonoBehaviour
     {
         Debug.Log(data);
     }
-}
-
-public struct VoxelData
-{
-    float3[] vertices;
-    float2[] uv;
-    float3[] normals;
 }

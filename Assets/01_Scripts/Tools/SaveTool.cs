@@ -1,3 +1,4 @@
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -17,44 +18,54 @@ public class SaveTool : Tool
     {
         Debug.Log("Activate Save.");
 
-        var texture = meshCreator.GetRenderTexture();
+        var rawDensityTexture = meshCreator.GetRenderTexture();
 
-        Texture2D tex = new(texture.width, texture.height, TextureFormat.RGB24, false);
-        RenderTexture.active = texture;
+        var request = await AsyncGPUReadback.RequestAsync(rawDensityTexture);
 
-        var request = await AsyncGPUReadback.RequestAsync(texture);
-
-        request.WaitForCompletion();
-
-        SaveData<byte[]> data = new();
-        var nativeArray = request.GetData<byte>();
-
-        byte[] newArray = new byte[nativeArray.Length];
-        for (int i = 0; i < newArray.Length; i++)
+        while ( request.done == false )
         {
-            newArray[i] = nativeArray[i];
+            await Awaitable.NextFrameAsync();
         }
 
-        nativeArray.Dispose();
-        data.data = newArray;
-        data.buildVersion = 0;
+        float[] floats = new float[request.layerCount * rawDensityTexture.width * rawDensityTexture.height];
+
+        int index = 0;
+
+        for ( int i = 0; i < request.layerCount; i++ )
+        {
+            var array = request.GetData<float>(i);
+            for ( int t = 0; t < array.Length; t++ )
+            {
+                var val = array[t];
+                floats[index++] = val;
+            }
+        }
+
+        int3 dimensions = new(rawDensityTexture.width, rawDensityTexture.height, rawDensityTexture.volumeDepth);
+
+        SaveData<float[], int3> saveData = new()
+        {
+            data = floats,
+            buildVersion = 0,
+            dataB = dimensions
+        };
 
         if (path == "")
         {
             Debug.Log("Path does not exist yet.");
-            SimpleFileBrowser.FileBrowser.ShowSaveDialog((path) => HandleSave(path, data), null, SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
+            SimpleFileBrowser.FileBrowser.ShowSaveDialog((path) => HandleSave(path, ref saveData), null, SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
         }
         else
         {
             Debug.Log("Saving.");
-            CreateSaveFile.SaveToFile(data, 0, path);
+            CreateSaveFile.SaveToFile(ref saveData, path);
         }
     }
 
-    private void HandleSave<T>(string[] path, T data)
+    private void HandleSave<T,U>(string[] path, ref SaveData<T,U> data)
     {
         this.path = path[0];
-        CreateSaveFile.SaveToFile(data, 0, this.path);
+        CreateSaveFile.SaveToFile(ref data, this.path);
     }
 
     public override void Deactivate()
