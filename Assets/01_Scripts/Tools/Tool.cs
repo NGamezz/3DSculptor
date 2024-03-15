@@ -6,7 +6,7 @@ public abstract class Tool : MonoBehaviour
 
     public string Name;
 
-    [SerializeField] public KeyBind keyBind;
+    public KeyBind KeyBind;
 
     public abstract void Activate(Brush previousTool);
     public abstract void Deactivate();

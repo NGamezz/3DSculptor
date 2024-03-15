@@ -5,15 +5,15 @@ using UnityEngine;
 [Serializable]
 public class KeyBind
 {
-    public List<KeyCode> keyCodes = new();
+    public List<KeyCode> KeyCodes = new();
 
     public bool IsKeyBindActivated ()
     {
-        if(keyCodes.Count == 0)
+        if(KeyCodes.Count == 0)
         {
             return false;
         }
-        foreach ( var keyCode in keyCodes )
+        foreach ( var keyCode in KeyCodes )
         {
             if ( !Input.GetKey(keyCode) )
             {

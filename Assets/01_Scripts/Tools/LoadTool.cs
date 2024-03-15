@@ -9,13 +9,13 @@ public class LoadTool : Tool
         LoadSaveFile.LoadFileAsync<float[], int3>((data) => HandleLoad(data));
     }
 
+    public override void Deactivate()
+    {
+    }
+
     private void HandleLoad ( SaveData<float[], int3> data)
     {
         meshCreator.LoadSaveData(data);
-    }
-
-    public override void Deactivate()
-    {
     }
 
     private void Awake()

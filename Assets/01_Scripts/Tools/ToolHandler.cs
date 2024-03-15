@@ -43,7 +43,7 @@ public class ToolHandler : MonoBehaviour
 
         foreach (var tool in tools)
         {
-            if (tool.keyBind.IsKeyBindActivated())
+            if (tool.KeyBind.IsKeyBindActivated())
             {
                 callBack?.Invoke(tool);
                 StartCoroutine(ResetToolSelection());

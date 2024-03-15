@@ -20,15 +20,8 @@ public class Brush : Tool, ISizeChangable
     [Range(0.001f, 0.1f)]
     [SerializeField] protected float strength = 0.05f;
 
+    private RaycastHit[] results = new RaycastHit[1];
     private MeshCreator meshCreator;
-
-    protected virtual void Awake ()
-    {
-        camera = Camera.main;
-        meshCreator = FindAnyObjectByType<MeshCreator>();
-        Brush = true;
-        UpdateToolSize();
-    }
 
     /// <summary>
     /// Additive
@@ -40,26 +33,7 @@ public class Brush : Tool, ISizeChangable
         this.size += size;
     }
 
-    protected void Perform ( Vector3 point, bool state )
-    {
-        if ( state )
-        {
-            UndoTool.PerformAction(( context ) => meshCreator.AlterModel(point, -strength, this.size), ( context ) => meshCreator.AlterModel(point, strength, this.size));
-            //meshCreator.Terraform(point, -strength, this.size);
-        }
-        else
-        {
-            UndoTool.PerformAction(( context ) => meshCreator.AlterModel(point, strength, this.size), ( context ) => meshCreator.AlterModel(point, -strength, this.size));
-            //meshCreator.Terraform(point, strength, this.size);
-        }
-    }
-
-    protected void UpdateToolSize ()
-    {
-        ghost.transform.localScale = Vector3.one * (this.size * 2.0f);
-    }
-
-    public override void Activate (Brush previousTool )
+    public override void Activate ( Brush previousTool )
     {
         state = true;
         ghost.SetActive(true);
@@ -73,8 +47,7 @@ public class Brush : Tool, ISizeChangable
         Debug.Log("deactivated");
     }
 
-    private RaycastHit[] results = new RaycastHit[1];
-    public void GetPositionOnModel ()
+    protected void GetPositionOnModel ()
     {
         var ray = camera.ScreenPointToRay(Input.mousePosition);
 
@@ -87,6 +60,31 @@ public class Brush : Tool, ISizeChangable
         targetPosition = results[0].point;
         ghost.transform.position = targetPosition;
     }
+    protected virtual void Awake ()
+    {
+        camera = Camera.main;
+        meshCreator = FindAnyObjectByType<MeshCreator>();
+        Brush = true;
+        UpdateToolSize();
+    }
+
+    protected void Perform ( Vector3 point, bool state )
+    {
+        if ( state )
+        {
+            UndoTool.PerformAction(( context ) => meshCreator.AlterModel(point, -strength, this.size), ( context ) => meshCreator.AlterModel(point, strength, this.size));
+        }
+        else
+        {
+            UndoTool.PerformAction(( context ) => meshCreator.AlterModel(point, strength, this.size), ( context ) => meshCreator.AlterModel(point, -strength, this.size));
+        }
+    }
+
+    protected void UpdateToolSize ()
+    {
+        ghost.transform.localScale = Vector3.one * (this.size * 2.0f);
+    }
+
 }
 
 public struct BrushActionData
