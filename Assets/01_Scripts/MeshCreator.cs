@@ -7,12 +7,12 @@ using UnityEngine.Rendering;
 public class MeshCreator : MonoBehaviour
 {
     [Header("Init Settings")]
-    public int numChunks = 4;
+    [SerializeField] private int numChunks = 4;
 
-    public int numPointsPerAxis = 10;
-    public float boundsSize = 10;
-    public float isoLevel = 0f;
-    public bool useFlatShading;
+    [SerializeField] private int numPointsPerAxis = 10;
+    [SerializeField] private float boundsSize = 10;
+    [SerializeField] private float isoLevel = 0f;
+    [SerializeField] private bool useFlatShading;
 
     [Header("References")]
     [SerializeField] private ComputeShader meshCompute;
@@ -20,7 +20,7 @@ public class MeshCreator : MonoBehaviour
     [SerializeField] private ComputeShader editCompute;
     [SerializeField] private ComputeShader setFloatsCompute;
     [SerializeField] private ComputeShader readFloatDataCompute;
-    public Material material;
+    [SerializeField] private Material material;
 
     private List<GameObject> meshHolders = new();
 
@@ -34,12 +34,7 @@ public class MeshCreator : MonoBehaviour
 
     private VertexData[] vertexDataArray;
 
-    public Mesh GetMesh ()
-    {
-        return default;
-    }
-
-    public void LoadVertices ( SaveData<float[], int3> saveData )
+    public void LoadSaveData ( SaveData<float[], int3> saveData )
     {
         var dimensions = saveData.dataB;
         Texture3D depthTexture = new(dimensions.x, dimensions.y, dimensions.z, TextureFormat.RFloat, false);
@@ -66,6 +61,42 @@ public class MeshCreator : MonoBehaviour
     public void CreateNew ()
     {
         Run(false);
+    }
+
+    //Todo: Potentially optimize it so it doesn't have to check every chunk for a sphere intersection.
+    public void AlterModel ( Vector3 point, float weight, float radius )
+    {
+        int editTextureSize = rawDensityTexture.width;
+        float editPixelWorldSize = boundsSize / editTextureSize;
+        int editRadius = Mathf.CeilToInt(radius / editPixelWorldSize);
+
+        float tx = Mathf.Clamp01((point.x + boundsSize / 2) / boundsSize);
+        float ty = Mathf.Clamp01((point.y + boundsSize / 2) / boundsSize);
+        float tz = Mathf.Clamp01((point.z + boundsSize / 2) / boundsSize);
+
+        int editX = Mathf.RoundToInt(tx * (editTextureSize - 1));
+        int editY = Mathf.RoundToInt(ty * (editTextureSize - 1));
+        int editZ = Mathf.RoundToInt(tz * (editTextureSize - 1));
+
+        editCompute.SetFloat("weight", weight);
+        editCompute.SetFloat("deltaTime", Time.deltaTime);
+        editCompute.SetInts("brushCentre", editX, editY, editZ);
+        editCompute.SetInt("brushRadius", editRadius);
+
+        editCompute.SetInt("size", editTextureSize);
+
+        ComputeHelper.Dispatch(editCompute, editTextureSize, editTextureSize, editTextureSize);
+
+        float worldRadius = (editRadius + 1) * editPixelWorldSize;
+        for ( int i = 0; i < chunks.Length; i++ )
+        {
+            var chunk = chunks[i];
+            if ( MathUtility.SphereIntersectsBox(point, worldRadius, chunk.Centre, Vector3.one * chunk.Size) )
+            {
+                chunk.Terra = true;
+                GenerateChunk(chunk);
+            }
+        }
     }
 
     private void Start ()
@@ -97,7 +128,7 @@ public class MeshCreator : MonoBehaviour
         GenerateAllChunks();
     }
 
-    void InitTextures ( bool load = false )
+    private void InitTextures ( bool load = false )
     {
         if ( !load )
         {
@@ -113,7 +144,7 @@ public class MeshCreator : MonoBehaviour
         meshCompute.SetTexture(0, "DensityTexture", rawDensityTexture);
     }
 
-    void GenerateAllChunks ()
+    private void GenerateAllChunks ()
     {
         for ( int i = 0; i < chunks.Length; i++ )
         {
@@ -177,7 +208,7 @@ public class MeshCreator : MonoBehaviour
         triangleBuffer.SetCounterValue(0);
         meshCompute.SetBuffer(marchKernel, "triangles", triangleBuffer);
 
-        Vector3 chunkCoord = (Vector3)chunk.id * (numPointsPerAxis - 1);
+        Vector3 chunkCoord = (Vector3)chunk.Id * (numPointsPerAxis - 1);
         meshCompute.SetVector("chunkCoord", chunkCoord);
 
         ComputeHelper.Dispatch(meshCompute, numVoxelsPerAxis, numVoxelsPerAxis, numVoxelsPerAxis, marchKernel);
@@ -250,42 +281,6 @@ public class MeshCreator : MonoBehaviour
                     chunks[i] = chunk;
                     i++;
                 }
-            }
-        }
-    }
-
-    //Todo: Potentially optimize it so it doesn't have to check every chunk for a sphere intersection.
-    public void AlterModel ( Vector3 point, float weight, float radius )
-    {
-        int editTextureSize = rawDensityTexture.width;
-        float editPixelWorldSize = boundsSize / editTextureSize;
-        int editRadius = Mathf.CeilToInt(radius / editPixelWorldSize);
-
-        float tx = Mathf.Clamp01((point.x + boundsSize / 2) / boundsSize);
-        float ty = Mathf.Clamp01((point.y + boundsSize / 2) / boundsSize);
-        float tz = Mathf.Clamp01((point.z + boundsSize / 2) / boundsSize);
-
-        int editX = Mathf.RoundToInt(tx * (editTextureSize - 1));
-        int editY = Mathf.RoundToInt(ty * (editTextureSize - 1));
-        int editZ = Mathf.RoundToInt(tz * (editTextureSize - 1));
-
-        editCompute.SetFloat("weight", weight);
-        editCompute.SetFloat("deltaTime", Time.deltaTime);
-        editCompute.SetInts("brushCentre", editX, editY, editZ);
-        editCompute.SetInt("brushRadius", editRadius);
-
-        editCompute.SetInt("size", editTextureSize);
-
-        ComputeHelper.Dispatch(editCompute, editTextureSize, editTextureSize, editTextureSize);
-
-        float worldRadius = (editRadius + 1) * editPixelWorldSize;
-        for ( int i = 0; i < chunks.Length; i++ )
-        {
-            var chunk = chunks[i];
-            if ( MathUtility.SphereIntersectsBox(point, worldRadius, chunk.centre, Vector3.one * chunk.size) )
-            {
-                chunk.terra = true;
-                GenerateChunk(chunk);
             }
         }
     }

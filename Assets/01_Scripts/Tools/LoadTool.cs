@@ -11,7 +11,7 @@ public class LoadTool : Tool
 
     private void HandleLoad ( SaveData<float[], int3> data)
     {
-        meshCreator.LoadVertices(data);
+        meshCreator.LoadSaveData(data);
     }
 
     public override void Deactivate()

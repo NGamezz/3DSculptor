@@ -5,43 +5,44 @@ using Unity.Mathematics;
 //By Sebastian Lague.
 public class Chunk
 {
-    public Vector3 centre;
-    public float size;
-    public Mesh mesh;
+    public Vector3 Centre;
+    public float Size;
+    public Mesh Mesh;
 
-    public ComputeBuffer pointsBuffer;
-    public MeshFilter filter;
-    MeshRenderer renderer;
-    MeshCollider collider;
-    public bool terra;
-    public Vector3Int id;
+    public ComputeBuffer PointsBuffer;
+    public MeshFilter Filter;
+    public bool Terra;
+    public Vector3Int Id;
+
+    private MeshRenderer Renderer;
+    private MeshCollider Collider;
 
     // Mesh processing
-    Dictionary<int2, int> vertexIndexMap;
-    List<Vector3> processedVertices;
-    List<Vector3> processedNormals;
-    List<int> processedTriangles;
+    private Dictionary<int2, int> vertexIndexMap;
+    private List<Vector3> processedVertices;
+    private List<Vector3> processedNormals;
+    private List<int> processedTriangles;
 
     public Chunk(Vector3Int coord, Vector3 centre, float size, int numPointsPerAxis, GameObject meshHolder)
     {
-        this.id = coord;
-        this.centre = centre;
-        this.size = size;
+        this.Id = coord;
+        this.Centre = centre;
+        this.Size = size;
 
-        mesh = new Mesh
+        Mesh = new Mesh
         {
             indexFormat = UnityEngine.Rendering.IndexFormat.UInt32
         };
 
         int numPointsTotal = numPointsPerAxis * numPointsPerAxis * numPointsPerAxis;
-        ComputeHelper.CreateStructuredBuffer<PointData>(ref pointsBuffer, numPointsTotal);
+        ComputeHelper.CreateStructuredBuffer<PointData>(ref PointsBuffer, numPointsTotal);
 
         // Mesh rendering and collision components
-        filter = meshHolder.AddComponent<MeshFilter>();
-        renderer = meshHolder.AddComponent<MeshRenderer>();
+        Filter = meshHolder.AddComponent<MeshFilter>();
+        Renderer = meshHolder.AddComponent<MeshRenderer>();
 
-        filter.mesh = mesh;
-        collider = renderer.gameObject.AddComponent<MeshCollider>();
+        Filter.mesh = Mesh;
+        Collider = Renderer.gameObject.AddComponent<MeshCollider>();
 
         vertexIndexMap = new Dictionary<int2, int>();
         processedVertices = new List<Vector3>();
@@ -62,7 +63,7 @@ public class Chunk
         {
             VertexData data = vertexData[i];
 
-            if (!useFlatShading && vertexIndexMap.TryGetValue(data.id, out int sharedVertexIndex))
+            if (!useFlatShading && vertexIndexMap.TryGetValue(data.Id, out int sharedVertexIndex))
             {
                 processedTriangles.Add(sharedVertexIndex);
             }
@@ -70,31 +71,31 @@ public class Chunk
             {
                 if (!useFlatShading)
                 {
-                    vertexIndexMap.Add(data.id, triangleIndex);
+                    vertexIndexMap.Add(data.Id, triangleIndex);
                 }
-                processedVertices.Add(data.position);
-                processedNormals.Add(data.normal);
+                processedVertices.Add(data.Position);
+                processedNormals.Add(data.Normal);
                 processedTriangles.Add(triangleIndex);
                 triangleIndex++;
             }
         }
 
-        collider.sharedMesh = null;
+        Collider.sharedMesh = null;
 
-        mesh.Clear();
-        mesh.SetVertices(processedVertices);
-        mesh.SetTriangles(processedTriangles, 0, true);
+        Mesh.Clear();
+        Mesh.SetVertices(processedVertices);
+        Mesh.SetTriangles(processedTriangles, 0, true);
 
         if (useFlatShading)
         {
-            mesh.RecalculateNormals();
+            Mesh.RecalculateNormals();
         }
         else
         {
-            mesh.SetNormals(processedNormals);
+            Mesh.SetNormals(processedNormals);
         }
 
-        collider.sharedMesh = mesh;
+        Collider.sharedMesh = Mesh;
     }
 
     public struct PointData
@@ -106,22 +107,22 @@ public class Chunk
 
     public void AddCollider()
     {
-        collider.sharedMesh = mesh;
+        Collider.sharedMesh = Mesh;
     }
 
     public void SetMaterial(Material material)
     {
-        renderer.material = material;
+        Renderer.material = material;
     }
 
     public void Release()
     {
-        ComputeHelper.Release(pointsBuffer);
+        ComputeHelper.Release(PointsBuffer);
     }
 
     public void DrawBoundsGizmo(Color col)
     {
         Gizmos.color = col;
-        Gizmos.DrawWireCube(centre, Vector3.one * size);
+        Gizmos.DrawWireCube(Centre, Vector3.one * Size);
     }
 }
