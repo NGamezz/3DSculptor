@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Manager : MonoBehaviour
+public class AutoSave : MonoBehaviour
 {
     [Tooltip("In Seconds."), Range(2.0f, 500.0f)]
     [SerializeField] private float autoSaveInterval = 10.0f;
@@ -25,11 +25,4 @@ public class Manager : MonoBehaviour
             saveTool.Activate(null);
         }
     }
-}
-
-public static class DataHolder
-{
-    public static int SaveVersion { get; set; }
-
-    public static TextPopUpManager TextPopupManager { get; set; } 
 }

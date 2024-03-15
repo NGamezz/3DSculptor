@@ -23,6 +23,8 @@ public class CreateNew : Tool
     {
         creator = FindAnyObjectByType<MeshCreator>();
         saveTool = FindAnyObjectByType<SaveTool>();
-        Brush = false;    
+        Brush = false;
+
+        DataHolder.SaveVersion = 0;
     }
 }

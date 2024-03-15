@@ -13,20 +13,6 @@ public class SaveData<T, U>
 
 public class CreateSaveFile
 {
-    private static int GetNewIndex ( string cachedPath, int version, int count, int maxCount )
-    {
-        string path = cachedPath + $"-{version}.save";
-
-        if ( File.Exists(path) && count < maxCount )
-        {
-            return GetNewIndex(cachedPath, version + 1, count + 1, maxCount);
-        }
-        else
-        {
-            return version;
-        }
-    }
-
     //Todo : Increase index if file exists, until index reaches max amount, then overwrite first file and continue as before.
     public static void SaveToFile<T, U> ( ref SaveData<T, U> thingToSave, string path )
     {
@@ -44,8 +30,6 @@ public class CreateSaveFile
         {
             if ( !File.Exists(path) )
             {
-                thingToSave.saveVersion = 0;
-
                 stream = File.Create(path);
                 bFormatter.Serialize(stream, thingToSave);
 

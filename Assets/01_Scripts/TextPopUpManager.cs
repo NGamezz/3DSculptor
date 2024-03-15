@@ -1,8 +1,6 @@
-using NaughtyAttributes;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using Unity.Mathematics;
 using UnityEngine;
 
 public struct TextPopup
@@ -25,12 +23,6 @@ public class TextPopUpManager : MonoBehaviour
 
     private Coroutine currentPopupRoutine = null;
 
-    [Button]
-    public void TestQueue ()
-    {
-        QueuePopup(new(1, "TestingPopup."));
-    }
-
     public void QueuePopup ( TextPopup popup )
     {
         textPopupQueue.Enqueue(popup);
@@ -38,10 +30,7 @@ public class TextPopUpManager : MonoBehaviour
 
     private void Dequeue ()
     {
-        if ( currentPopupRoutine == null )
-        {
-            currentPopupRoutine = StartCoroutine(PlayPopup(textPopupQueue.Dequeue()));
-        }
+        currentPopupRoutine ??= StartCoroutine(PlayPopup(textPopupQueue.Dequeue()));
     }
 
     private void Start ()
