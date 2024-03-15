@@ -8,15 +8,18 @@ public class SaveTool : Tool
 
     private string path = "";
 
-    private void Awake()
+    public void ResetPath ()
     {
-        if (meshCreator == null)
-            meshCreator = FindAnyObjectByType<MeshCreator>();
+        path = "";
+    }
+
+    public override void Deactivate()
+    {
     }
 
     public override async void Activate(Brush previousTool)
     {
-        Debug.Log("Activate Save.");
+        DataHolder.TextPopupManager.QueuePopup(new(2, "Starting Save."));
 
         var rawDensityTexture = meshCreator.GetRenderTexture();
 
@@ -53,7 +56,7 @@ public class SaveTool : Tool
         if (path == "")
         {
             Debug.Log("Path does not exist yet.");
-            SimpleFileBrowser.FileBrowser.ShowSaveDialog((path) => HandleSave(path, ref saveData), null, SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
+            SimpleFileBrowser.FileBrowser.ShowSaveDialog((path) => HandleSave(path, ref saveData), () => DataHolder.TextPopupManager.QueuePopup(new(2, "Canceled Save.")), SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
         }
         else
         {
@@ -62,13 +65,15 @@ public class SaveTool : Tool
         }
     }
 
+    private void Awake()
+    {
+        if (meshCreator == null)
+            meshCreator = FindAnyObjectByType<MeshCreator>();
+    }
+
     private void HandleSave<T,U>(string[] path, ref SaveData<T,U> data)
     {
         this.path = path[0];
         CreateSaveFile.SaveToFile(ref data, this.path);
-    }
-
-    public override void Deactivate()
-    {
     }
 }

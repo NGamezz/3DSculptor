@@ -1,11 +1,11 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using ComputeShaderUtility;
 
-// This class contains some helper functions to make life a little easier working with compute shaders
-// (Very work-in-progress!)
+//From Sebastian Lague
 
+// This class contains some helper functions to make life a little easier working with compute shaders
+// (Very work-in-progress!) 
 public static class ComputeHelper
 {
 

@@ -1,6 +1,7 @@
 using UnityEngine;
 using static UnityEngine.Mathf;
 
+//From Sebastian Lague.
 public static class MathUtility
 {
 	public static bool SphereIntersectsBox(Vector3 sphereCentre, float sphereRadius, Vector3 boxCentre, Vector3 boxSize)
@@ -28,5 +29,4 @@ public static class MathUtility
 	{
 		return Quaternion.Inverse(rotation) * vector;
 	}
-
 }

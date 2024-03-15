@@ -1,6 +1,8 @@
 ﻿ #pragma kernel ProcessCube
 #include "/Includes/MarchTables.compute"
 
+//By Sebastian Lague.
+
 struct Vertex
 {
     float3 position;
@@ -14,7 +16,7 @@ struct Triangle
     Vertex vertexB;
     Vertex vertexA;
 };
-//
+
 AppendStructuredBuffer<Triangle> triangles;
 RWTexture3D<float> DensityTexture;
 int textureSize;

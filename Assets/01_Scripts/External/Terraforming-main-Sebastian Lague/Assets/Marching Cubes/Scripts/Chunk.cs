@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Unity.Mathematics;
 
+//By Sebastian Lague.
 public class Chunk
 {
     public Vector3 centre;

@@ -1,5 +1,3 @@
-using Unity.Burst;
-using Unity.Mathematics;
 using UnityEngine;
 
 public class Manager : MonoBehaviour
@@ -33,13 +31,5 @@ public static class DataHolder
 {
     public static int SaveVersion { get; set; }
 
-    //public static void SetSave ( SaveData<float[], int3> save )
-    //{
-    //    if ( save != null )
-    //    {
-    //        currentSave = save;
-    //    }
-    //}
-
-    //public static SaveData<float[], int3> GetSaveData () { return currentSave; }
+    public static TextPopUpManager TextPopupManager { get; set; } 
 }

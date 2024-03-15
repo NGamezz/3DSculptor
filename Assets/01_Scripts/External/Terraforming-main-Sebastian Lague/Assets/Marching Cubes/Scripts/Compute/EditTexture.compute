@@ -1,4 +1,3 @@
-
 #pragma kernel CSMain
 
 RWTexture3D<float> EditTexture;
@@ -7,12 +6,19 @@ int3 brushCentre;
 int brushRadius;
 float deltaTime;
 float weight;
+
+//AppendStructuredBuffer<float> changedFloats;
   
 // return smooth value between 0 and 1 (0 when t = minVal, 1 when t = maxVal)
 float smoothstep(float minVal, float maxVal, float t)
 {
     t = saturate((t - minVal) / (maxVal - minVal));
     return t * t * (3 - 2 * t);
+}
+
+int GetIndexFromPosition(int3 position, int size)
+{
+    return position.x + position.y * size + position.z * size * size;
 }
 
 [numthreads(8, 8, 8)]
@@ -34,8 +40,51 @@ void CSMain(int3 id : SV_DispatchThreadID)
     if (sqrDst <= brushRadius * brushRadius)
     {
         float dst = sqrt(sqrDst);
-        //float brushWeight = 1 - smoothstep(brushRadius * 0.7, brushRadius, dst);
-        float brushWeight = 1;
+        float brushWeight = 1 - smoothstep(brushRadius * 0.7, brushRadius, dst);
+
+        //changedFloats.Append(EditTexture[id]);
         EditTexture[id] += weight * deltaTime * brushWeight;
     }
 }
+
+//Original.
+//#pragma kernel CSMain
+
+//RWTexture3D<float> EditTexture;
+//int size;
+//int3 brushCentre;
+//int brushRadius;
+//float deltaTime;
+//float weight;
+  
+//// return smooth value between 0 and 1 (0 when t = minVal, 1 when t = maxVal)
+//float smoothstep(float minVal, float maxVal, float t)
+//{
+//    t = saturate((t - minVal) / (maxVal - minVal));
+//    return t * t * (3 - 2 * t);
+//}
+
+//[numthreads(8, 8, 8)]
+//void CSMain(int3 id : SV_DispatchThreadID)
+//{
+//    const int b = 4;
+//    if (id.x >= size - b || id.y >= size - b || id.z >= size - b)
+//    {
+//        return;
+//    }
+//    if (id.x <= b || id.y <= b || id.z <= b)
+//    {
+//        return;
+//    }
+
+//    int3 offset = id - brushCentre;
+//    int sqrDst = dot(offset, offset);
+
+//    if (sqrDst <= brushRadius * brushRadius)
+//    {
+//        float dst = sqrt(sqrDst);
+//        float brushWeight = 1 - smoothstep(brushRadius * 0.7, brushRadius, dst);
+//        //float brushWeight = 1;
+//        EditTexture[id] += weight * deltaTime * brushWeight;
+//    }
+//}

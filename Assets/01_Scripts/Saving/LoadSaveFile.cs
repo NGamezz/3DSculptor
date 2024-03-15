@@ -38,6 +38,6 @@ public class LoadSaveFile
 
     public static void LoadFileAsync<T, U> ( Action<SaveData<T, U>> uponRetrieval )
     {
-        SimpleFileBrowser.FileBrowser.ShowLoadDialog(( path ) => HandleLoad(path, uponRetrieval), null, SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
+        SimpleFileBrowser.FileBrowser.ShowLoadDialog(( path ) => HandleLoad(path, uponRetrieval), () => DataHolder.TextPopupManager.QueuePopup(new(2, "Canceled Load.")), SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
     }
 }

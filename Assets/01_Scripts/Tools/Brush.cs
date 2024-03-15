@@ -44,12 +44,12 @@ public class Brush : Tool, ISizeChangable
     {
         if ( state )
         {
-            UndoTool.PerformAction(( context ) => meshCreator.Terraform(point, -strength, this.size), ( context ) => meshCreator.Terraform(point, strength, this.size));
+            UndoTool.PerformAction(( context ) => meshCreator.AlterModel(point, -strength, this.size), ( context ) => meshCreator.AlterModel(point, strength, this.size));
             //meshCreator.Terraform(point, -strength, this.size);
         }
         else
         {
-            UndoTool.PerformAction(( context ) => meshCreator.Terraform(point, strength, this.size), ( context ) => meshCreator.Terraform(point, -strength, this.size));
+            UndoTool.PerformAction(( context ) => meshCreator.AlterModel(point, strength, this.size), ( context ) => meshCreator.AlterModel(point, -strength, this.size));
             //meshCreator.Terraform(point, strength, this.size);
         }
     }

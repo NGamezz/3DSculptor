@@ -4,13 +4,14 @@ using System.Text;
 using System;
 
 //Original Obtained from SteenPetersen & ReDarkTechnology on the Unity Forum. Adjusted for personal requirement, Original Can be found below.
-public class ExportMeshToOBJ : ScriptableObject
+public class ExportMeshToOBJ
 {
-    public static async void ExportToOBJ(GameObject obj = null, Mesh _mesh = null, Action ifExistsCallback = null)
+    public static async void ExportToOBJ(string path, GameObject obj = null, Mesh _mesh = null, Action ifExistsCallback = null)
     {
-        Mesh mesh = null;
+        Debug.Log("Starting Export.");
 
-        if (obj == null && _mesh == null)
+        Mesh mesh;
+        if ( obj == null && _mesh == null)
         {
             Debug.Log("No object selected.");
             return;
@@ -34,7 +35,7 @@ public class ExportMeshToOBJ : ScriptableObject
             mesh = _mesh;
         }
 
-        string path = Path.Combine(Application.persistentDataPath, $"{mesh.name}.obj");
+        path += ".obj";
 
         if (ifExistsCallback != null && File.Exists(path))
         {
@@ -45,6 +46,8 @@ public class ExportMeshToOBJ : ScriptableObject
         StreamWriter writer = new(path);
         await writer.WriteAsync(GetMeshOBJ(mesh.name, mesh));
         writer.Close();
+
+        DataHolder.TextPopupManager.QueuePopup(new(2, $"Exported To : {path}"));
     }
 
     public static string GetMeshOBJ(string name, Mesh mesh)
