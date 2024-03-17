@@ -1168,7 +1168,7 @@ MonoBehaviour:
   Brush: 1
   Name: Sphere
   KeyBind:
-    KeyCodes: 
+    KeyCodes: 09000000
   ghostMaterial: {fileID: 2100000, guid: c0f84e50f2cbdff4eb07eb0c2b4b7993, type: 2}
   size: 5
   ownLayer: 6
@@ -1203,7 +1203,7 @@ MonoBehaviour:
   Brush: 1
   Name: Save
   KeyBind:
-    KeyCodes: 
+    KeyCodes: 3201000073000000
 --- !u!114 &1895845148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1232,7 +1232,7 @@ MonoBehaviour:
   Brush: 1
   Name: Load
   KeyBind:
-    KeyCodes: 
+    KeyCodes: 320100006c000000
 --- !u!114 &1895845150
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1248,7 +1248,7 @@ MonoBehaviour:
   Brush: 0
   Name: Undo
   KeyBind:
-    KeyCodes: 
+    KeyCodes: 320100007a000000
   undo: 1
 --- !u!114 &1895845153
 MonoBehaviour:
@@ -1265,7 +1265,7 @@ MonoBehaviour:
   Brush: 0
   Name: Decrease Size
   KeyBind:
-    KeyCodes: 
+    KeyCodes: 0d010000
   increment: -0.5
 --- !u!114 &1895845154
 MonoBehaviour:
@@ -1282,7 +1282,7 @@ MonoBehaviour:
   Brush: 0
   Name: Increase Size
   KeyBind:
-    KeyCodes: 
+    KeyCodes: 0e010000
   increment: 0.5
 --- !u!114 &1895845155
 MonoBehaviour:
@@ -1299,7 +1299,7 @@ MonoBehaviour:
   Brush: 1
   Name: Create New.
   KeyBind:
-    KeyCodes: 
+    KeyCodes: 320100006e000000
 --- !u!114 &1895845156
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1315,7 +1315,7 @@ MonoBehaviour:
   Brush: 1
   Name: Export Tool
   KeyBind:
-    KeyCodes: 
+    KeyCodes: 3201000065000000
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

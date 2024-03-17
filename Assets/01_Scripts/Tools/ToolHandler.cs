@@ -24,6 +24,8 @@ public class ToolHandler : MonoBehaviour
             tool.Deactivate();
         }
 
+        Debug.Log(tools.Length);
+
         currentTool = FindAnyObjectByType<SphereTool>();
         if (currentTool == null)
             currentTool = tools[0];
