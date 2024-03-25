@@ -6,9 +6,15 @@ int3 brushCentre;
 int brushRadius;
 float deltaTime;
 float weight;
-
-//AppendStructuredBuffer<float> changedFloats;
   
+struct ValueData
+{
+    int3 valueId;
+    float value;
+};
+
+AppendStructuredBuffer<ValueData> changedFloats;
+
 // return smooth value between 0 and 1 (0 when t = minVal, 1 when t = maxVal)
 float smoothstep(float minVal, float maxVal, float t)
 {
@@ -24,16 +30,6 @@ int GetIndexFromPosition(int3 position, int size)
 [numthreads(8, 8, 8)]
 void CSMain(int3 id : SV_DispatchThreadID)
 {
-    const int b = 4;
-    if (id.x >= size - b || id.y >= size - b || id.z >= size - b)
-    {
-        return;
-    }
-    if (id.x <= b || id.y <= b || id.z <= b)
-    {
-        return;
-    }
-
     int3 offset = id - brushCentre;
     int sqrDst = dot(offset, offset);
 
@@ -42,7 +38,12 @@ void CSMain(int3 id : SV_DispatchThreadID)
         float dst = sqrt(sqrDst);
         float brushWeight = 1 - smoothstep(brushRadius * 0.7, brushRadius, dst);
 
-        //changedFloats.Append(EditTexture[id]);
+        ValueData data;
+        data.valueId = id;
+        data.value = EditTexture[id];
+        
+        changedFloats.Append(data);
+        
         EditTexture[id] += weight * deltaTime * brushWeight;
     }
 }

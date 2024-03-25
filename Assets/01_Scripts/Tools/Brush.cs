@@ -60,6 +60,7 @@ public class Brush : Tool, ISizeChangable
         targetPosition = results[0].point;
         ghost.transform.position = targetPosition;
     }
+
     protected virtual void Awake ()
     {
         camera = Camera.main;
@@ -70,13 +71,25 @@ public class Brush : Tool, ISizeChangable
 
     protected void Perform ( Vector3 point, bool state )
     {
+        BrushActionData actionData = new()
+        {
+            position = point,
+            radius = size,
+        };
+
         if ( state )
         {
-            UndoTool.PerformAction(( context ) => meshCreator.AlterModel(point, -strength, this.size), ( context ) => meshCreator.AlterModel(point, strength, this.size));
+            actionData.strenght = -strength;
+
+            EventManager<BrushActionData>.InvokeEvent(actionData, EventType.OnEdit);
+            //meshCreator.AlterModel(point, -strength, this.size);
         }
         else
         {
-            UndoTool.PerformAction(( context ) => meshCreator.AlterModel(point, strength, this.size), ( context ) => meshCreator.AlterModel(point, -strength, this.size));
+            actionData.strenght = strength;
+
+            EventManager<BrushActionData>.InvokeEvent(actionData, EventType.OnEdit);
+            //meshCreator.AlterModel(point, strength, this.size);
         }
     }
 

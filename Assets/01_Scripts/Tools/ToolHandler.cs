@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine;
 
 public class ToolHandler : MonoBehaviour
@@ -23,8 +22,6 @@ public class ToolHandler : MonoBehaviour
         {
             tool.Deactivate();
         }
-
-        Debug.Log(tools.Length);
 
         currentTool = FindAnyObjectByType<SphereTool>();
         if (currentTool == null)

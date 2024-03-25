@@ -8,7 +8,7 @@ public class ViewController : MonoBehaviour
     [Range(1, 5)]
     [SerializeField] private float mouseSens;
 
-    [Tooltip("Multiplicative"), Range(1, 6)]
+    [Tooltip("Multiplicative"), Range(1, 25)]
     [SerializeField] private float zoomSpeed = 0.5f;
 
     [SerializeField] private int rotateMouseButton = 2;

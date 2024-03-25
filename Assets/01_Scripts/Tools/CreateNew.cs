@@ -5,14 +5,16 @@ public class CreateNew : Tool
 
     public override void Activate ( Brush previousTool )
     {
-        DataHolder.TextPopupManager.QueuePopup(new(2, "Creating New Model."));
+        EventManager<TextPopup>.InvokeEvent(new(2, "Creating New Model."), EventType.OnQueuePopup);
+        //DataHolder.TextPopupManager.QueuePopup(new(2, "Creating New Model."));
 
         if(saveTool != null)
             saveTool.ResetPath();
 
         DataHolder.SaveVersion = 0;
 
-        creator.CreateNew();
+        EventManager<bool>.InvokeEvent(EventType.OnCreateNew);
+        //creator.CreateNew();
     }
 
     public override void Deactivate ()

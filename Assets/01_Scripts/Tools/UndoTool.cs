@@ -1,73 +1,63 @@
-using System;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class UndoTool : Tool
 {
-    private static List<Command> commands = new();
+    private DoubleStack<MeshCreator.ActionData> actionHistory = new();
 
-    [SerializeField] private bool undo = true;
+    [SerializeField] private int amountOfStepsPerActivation = 3;
+    [SerializeField] private int maxUndoCount = 25;
 
-    private static int currentIndex = 0;
-
-    public static void PerformAction ( Action<object> actionToPerform, Action<object> undo )
+    private void OnEnable ()
     {
-        var newActionHolder = new Command
+        EventManager<MeshCreator.ActionData>.AddListener(EventType.OnPerformAction, PerformAction);
+        EventManager<SaveData<float[], int3>>.AddListener(EventType.OnDataLoad, ResetActionStack);
+    }
+
+    private void OnDisable ()
+    {
+        EventManager<MeshCreator.ActionData>.RemoveListener(EventType.OnPerformAction, PerformAction);
+        EventManager<SaveData<float[], int3>>.RemoveListener(EventType.OnDataLoad, ResetActionStack);
+    }
+
+    private void ResetActionStack ( SaveData<float[], int3> _ )
+    {
+        actionHistory.Clear();
+    }
+
+    private void PerformAction ( MeshCreator.ActionData actionData )
+    {
+        actionHistory.Push(actionData);
+
+        if ( actionHistory.Count >= maxUndoCount * amountOfStepsPerActivation )
         {
-            Action = actionToPerform,
-            Undo = undo
-        };
-
-        commands.Add( newActionHolder );
-        newActionHolder.Action?.Invoke(null);
-
-        currentIndex = Array.IndexOf(commands.ToArray(), newActionHolder);
+            actionHistory.PopBottom();
+        }
     }
 
     public void Undo ()
     {
-        if ( currentIndex <= 0 )
+        if ( actionHistory.Count <= 0 )
+            return;
+
+        for ( int i = 0; i < amountOfStepsPerActivation; i++ )
         {
-            Debug.LogWarning("No Undo's Available.");
-            return;
+            if ( actionHistory.Count <= 0 )
+            { continue; }
+
+            var currentData = actionHistory.Pop();
+
+            if ( currentData == null )
+                return;
+
+            EventManager<MeshCreator.ActionData>.InvokeEvent(currentData, EventType.OnUndo);
         }
-
-        var currentCommand = commands[currentIndex--];
-
-        if ( currentCommand.undone )
-            return;
-
-        currentCommand.undone = true;
-        currentCommand.Undo?.Invoke(null);
     }
 
-    public void Redo ()
+    public override void Activate ( Brush previousBrush )
     {
-        if ( currentIndex >= commands.Count || currentIndex + 1 >= commands.Count )
-        {
-            Debug.LogWarning("No Redo's Available.");
-            return;
-        }
-
-        var currentCommand = commands[++currentIndex];
-
-        if ( !currentCommand.undone )
-            return;
-
-        currentCommand.undone = false;
-        currentCommand.Action?.Invoke(null);
-    }
-
-    public override void Activate (Brush previousBrush )
-    {
-        if ( undo )
-        {
-            Undo();
-        }
-        else
-        {
-            Redo();
-        }
+        Undo();
     }
 
     public override void Deactivate ()
@@ -75,9 +65,59 @@ public class UndoTool : Tool
     }
 }
 
-public class Command
+public class DoubleStack<T>
 {
-    public Action<object> Action;
-    public Action<object> Undo;
-    public bool undone = false;
+    private readonly List<T> values = new();
+
+    public int Count { get { return values.Count; } }
+
+    public void Push ( T item )
+    {
+        values.Add(item);
+    }
+
+    public T Pop ()
+    {
+        if ( values.Count <= 0 )
+            return default;
+
+        T item = values[^1];
+        values.Remove(item);
+
+        return item;
+    }
+
+    public T PopBottom ()
+    {
+        if ( values.Count <= 0 )
+            return default;
+
+        T item = values[0];
+        values.Remove(item);
+
+        return item;
+    }
+
+    public T Peek ()
+    {
+        if ( values.Count <= 1 )
+            return default;
+
+        T item = values[values.Count - 2];
+        return item;
+    }
+
+    public T PeekBottom ()
+    {
+        if ( values.Count <= 1 )
+            return default;
+
+        T item = values[1];
+        return item;
+    }
+
+    public void Clear ()
+    {
+        values.Clear();
+    }
 }

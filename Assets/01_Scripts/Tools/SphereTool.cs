@@ -17,6 +17,7 @@ public class SphereTool : Brush
     {
         if ( !state )
             return;
+
         GetPositionOnModel();
         if ( Input.GetMouseButton(0) )
         {

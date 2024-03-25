@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -6,10 +7,10 @@ using UnityEngine.Rendering;
 //Original Version Was Created By Sebastian Lague, and can be found at the bottom of this file or on https://github.com/SebLague/Terraforming/tree/main.
 public class MeshCreator : MonoBehaviour
 {
-    [Header("Init Settings")]
+    [Header("Initializing Settings")]
     [SerializeField] private int numChunks = 4;
 
-    [SerializeField] private int numPointsPerAxis = 10;
+    [SerializeField] private int numPointsPerAxis = 20;
     [SerializeField] private float boundsSize = 10;
     [SerializeField] private float isoLevel = 0f;
     [SerializeField] private bool useFlatShading;
@@ -19,53 +20,35 @@ public class MeshCreator : MonoBehaviour
     [SerializeField] private ComputeShader densityCompute;
     [SerializeField] private ComputeShader editCompute;
     [SerializeField] private ComputeShader setFloatsCompute;
-    [SerializeField] private ComputeShader readFloatDataCompute;
     [SerializeField] private Material material;
 
     private List<GameObject> meshHolders = new();
 
     private ComputeBuffer triangleBuffer;
     private ComputeBuffer triCountBuffer;
+
     private ComputeBuffer floatCountBuffer;
     private ComputeBuffer floatBuffer;
     private ComputeBuffer floatDataBuffer;
-    private Chunk[] chunks;
+
     private RenderTexture rawDensityTexture;
 
+    private Chunk[] chunks;
+
     private VertexData[] vertexDataArray;
-
-    public void LoadSaveData ( SaveData<float[], int3> saveData )
-    {
-        var dimensions = saveData.dataB;
-        Texture3D depthTexture = new(dimensions.x, dimensions.y, dimensions.z, TextureFormat.RFloat, false);
-
-        depthTexture.SetPixelData(saveData.data, 0);
-        depthTexture.Apply();
-
-        Graphics.CopyTexture(depthTexture, rawDensityTexture);
-
-        Destroy(depthTexture);
-
-        Debug.Log("Loaded.");
-
-        DataHolder.TextPopupManager.QueuePopup(new(2, "Loaded Data. Reconstructing."));
-
-        Run(true);
-    }
 
     public RenderTexture GetRenderTexture ()
     {
         return rawDensityTexture;
     }
 
-    public void CreateNew ()
-    {
-        Run(false);
-    }
-
     //Todo: Potentially optimize it so it doesn't have to check every chunk for a sphere intersection.
-    public void AlterModel ( Vector3 point, float weight, float radius )
+    public void AlterModel ( BrushActionData brushData)
     {
+        float radius = brushData.radius;
+        float weight = brushData.strenght;
+        Vector3 point = brushData.position;
+
         int editTextureSize = rawDensityTexture.width;
         float editPixelWorldSize = boundsSize / editTextureSize;
         int editRadius = Mathf.CeilToInt(radius / editPixelWorldSize);
@@ -78,16 +61,39 @@ public class MeshCreator : MonoBehaviour
         int editY = Mathf.RoundToInt(ty * (editTextureSize - 1));
         int editZ = Mathf.RoundToInt(tz * (editTextureSize - 1));
 
+        floatDataBuffer.SetCounterValue(0);
+
+        editCompute.SetBuffer(0, "changedFloats", floatDataBuffer);
+
         editCompute.SetFloat("weight", weight);
         editCompute.SetFloat("deltaTime", Time.deltaTime);
         editCompute.SetInts("brushCentre", editX, editY, editZ);
         editCompute.SetInt("brushRadius", editRadius);
-
         editCompute.SetInt("size", editTextureSize);
 
         ComputeHelper.Dispatch(editCompute, editTextureSize, editTextureSize, editTextureSize);
 
-        float worldRadius = (editRadius + 1) * editPixelWorldSize;
+        int[] floatCountData = new int[1];
+        floatCountBuffer.SetData(floatCountData);
+        ComputeBuffer.CopyCount(floatDataBuffer, floatCountBuffer, 0);
+        floatCountBuffer.GetData(floatCountData);
+
+        int stride = ComputeHelper.GetStride<PointData>();
+        int amount = Mathf.RoundToInt(stride * (floatCountData[0] / stride));
+
+        PointData[] floats = new PointData[amount];
+        floatDataBuffer.GetData(floats, 0, 0, amount);
+
+        ActionData currentActionData = new()
+        {
+            radius = editRadius,
+            floats = floats,
+            position = point,
+        };
+
+        EventManager<ActionData>.InvokeEvent(currentActionData, EventType.OnPerformAction);
+
+                float worldRadius = (editRadius + 1) * editPixelWorldSize;
         for ( int i = 0; i < chunks.Length; i++ )
         {
             var chunk = chunks[i];
@@ -97,6 +103,41 @@ public class MeshCreator : MonoBehaviour
                 GenerateChunk(chunk);
             }
         }
+    }
+
+    private void LoadSaveData ( SaveData<float[], int3> saveData )
+    {
+        var dimensions = saveData.dataB;
+        Texture3D depthTexture = new(dimensions.x, dimensions.y, dimensions.z, TextureFormat.RFloat, false);
+
+        depthTexture.SetPixelData(saveData.data, 0);
+        depthTexture.Apply();
+
+        Graphics.CopyTexture(depthTexture, rawDensityTexture);
+
+        Destroy(depthTexture);
+
+        EventManager<TextPopup>.InvokeEvent(new(2, "Loaded Data. Reconstructing."), EventType.OnQueuePopup);
+
+        Run(true);
+    }
+
+    private void CreateNew ()
+    {
+        Run(false);
+    }
+
+    public class ActionData
+    {
+        public int radius;
+        public PointData[] floats;
+        public Vector3 position;
+    }
+
+    public struct PointData
+    {
+        public int3 index;
+        public float value;
     }
 
     private void Start ()
@@ -137,8 +178,7 @@ public class MeshCreator : MonoBehaviour
             Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
         }
 
-        readFloatDataCompute.SetTexture(0, "EditTexture", rawDensityTexture);
-        setFloatsCompute.SetTexture(0, "EditTexture", rawDensityTexture);
+        setFloatsCompute.SetTexture(0, "editTexture", rawDensityTexture);
         densityCompute.SetTexture(0, "DensityTexture", rawDensityTexture);
         editCompute.SetTexture(0, "EditTexture", rawDensityTexture);
         meshCompute.SetTexture(0, "DensityTexture", rawDensityTexture);
@@ -205,6 +245,7 @@ public class MeshCreator : MonoBehaviour
         meshCompute.SetInt("numPointsPerAxis", numPointsPerAxis);
         meshCompute.SetFloat("isoLevel", isoLevel);
         meshCompute.SetFloat("planetSize", boundsSize);
+
         triangleBuffer.SetCounterValue(0);
         meshCompute.SetBuffer(marchKernel, "triangles", triangleBuffer);
 
@@ -237,20 +278,40 @@ public class MeshCreator : MonoBehaviour
         triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
         triangleBuffer = new ComputeBuffer(maxVertexCount, ComputeHelper.GetStride<VertexData>(), ComputeBufferType.Append);
         vertexDataArray = new VertexData[maxVertexCount];
-        //floatCountBuffer = new(1, sizeof(int), ComputeBufferType.Raw);
-        //floatBuffer = new(maxVertexCount, sizeof(float), ComputeBufferType.Append);
-        //floatDataBuffer = new(maxVertexCount, sizeof(float), ComputeBufferType.Default);
+
+        int size = numChunks * (numPointsPerAxis - 1) + 1;
+        int bufferSize = size * size * size;
+
+        floatBuffer = new(bufferSize, ComputeHelper.GetStride<PointData>(), ComputeBufferType.Default);
+        floatDataBuffer = new(bufferSize, ComputeHelper.GetStride<PointData>(), ComputeBufferType.Append);
+        floatCountBuffer = new(1, sizeof(int), ComputeBufferType.Raw);
     }
 
     private void ReleaseBuffers ()
     {
-        ComputeHelper.Release(triangleBuffer, triCountBuffer, floatBuffer, floatCountBuffer, floatDataBuffer);
+        ComputeHelper.Release(triCountBuffer, triangleBuffer, floatBuffer, floatDataBuffer, floatCountBuffer);
+    }
+
+    private void OnDisable ()
+    {
+        EventManager<bool>.RemoveListener(EventType.OnCreateNew, CreateNew);
+        EventManager<SaveData<float[], int3>>.RemoveListener(EventType.OnDataLoad, LoadSaveData);
+        EventManager<ActionData>.RemoveListener(EventType.OnUndo, Undo);
+        EventManager<BrushActionData>.RemoveListener(EventType.OnEdit, AlterModel);
     }
 
     private void OnDestroy ()
     {
         ReleaseBuffers();
         DeleteChunks();
+    }
+
+    private void OnEnable ()
+    {
+        EventManager<BrushActionData>.AddListener(EventType.OnEdit, AlterModel);
+        EventManager<bool>.AddListener(EventType.OnCreateNew, CreateNew);
+        EventManager<SaveData<float[], int3>>.AddListener(EventType.OnDataLoad, LoadSaveData);
+        EventManager<ActionData>.AddListener(EventType.OnUndo, Undo);
     }
 
     private void CreateChunks ()
@@ -285,59 +346,32 @@ public class MeshCreator : MonoBehaviour
         }
     }
 
-    #region testing
-    //private void FixedUpdate ()
-    //{
-    //    if ( editHistory.Count > 0 && Input.GetKey(KeyCode.Z) )
-    //    {
-    //        Undo();
-    //    }
-    //}
+    private void Undo ( ActionData currentData )
+    {
+        PointData[] pointData = currentData.floats;
 
-    //Work In Progress/ Testing.
-    //private void Undo ()
-    //{
-    //Debug.Log("Undo.");
+        var editSize = rawDensityTexture.width;
+        float editPixelWorldSize = boundsSize / editSize;
+        int editRadius = currentData.radius;
 
-    //var currentData = editHistory.Pop();
+        floatBuffer.SetData(pointData);
 
-    //Debug.Log(currentData.changedValues.Length);
+        setFloatsCompute.SetBuffer(0, "valueBuffer", floatBuffer);
+        setFloatsCompute.SetInt("size", pointData.Length);
 
-    //var editSize = rawDensityTexture.width;
-    //float editPixelWorldSize = boundsSize / editSize;
-    //int editRadius = currentData.radius;
+        ComputeHelper.Dispatch(setFloatsCompute, pointData.Length);
 
-    //floatBuffer.SetData(currentData.changedValues);
-
-    //setFloatsCompute.SetBuffer(0, "changedFloats", floatBuffer);
-    //setFloatsCompute.SetInts("brushCentre", currentData.position.x, currentData.position.y, currentData.position.z);
-    //setFloatsCompute.SetInt("brushRadius", currentData.radius);
-    //setFloatsCompute.SetInt("size", editSize);
-
-    //ComputeHelper.Dispatch(setFloatsCompute, editSize, editSize, editSize);
-
-    //float worldRadius = (editRadius + 1) * editPixelWorldSize;
-    //for ( int i = 0; i < chunks.Length; i++ )
-    //{
-    //    var chunk = chunks[i];
-    //    if ( MathUtility.SphereIntersectsBox(currentData.point, worldRadius, chunk.centre, Vector3.one * chunk.size) )
-    //    {
-    //        chunk.terra = true;
-    //        GenerateChunk(chunk);
-    //    }
-    //}
-    //}
-
-    //private struct ActionData
-    //{
-    //    public int radius;
-    //    public int3 position;
-    //    public Vector3 point;
-    //    public float[] changedValues;
-    //}
-
-    //private Stack<ActionData> editHistory = new();
-    #endregion
+        float worldRadius = (editRadius + 1) * editPixelWorldSize;
+        for ( int i = 0; i < chunks.Length; i++ )
+        {
+            var chunk = chunks[i];
+            if ( MathUtility.SphereIntersectsBox(currentData.position, worldRadius, chunk.Centre, Vector3.one * chunk.Size) )
+            {
+                chunk.Terra = true;
+                GenerateChunk(chunk);
+            }
+        }
+    }
 
     private void Create3DTexture ( ref RenderTexture texture, int size, string name )
     {

@@ -362,6 +362,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sineStrength: 0.5
+  frequency: 4
 --- !u!1 &592678444
 GameObject:
   m_ObjectHideFlags: 0
@@ -588,8 +589,7 @@ MonoBehaviour:
   meshCompute: {fileID: 7200000, guid: a673d46038c7549d0ab1ffa38907c8c2, type: 3}
   densityCompute: {fileID: 7200000, guid: fdcbc69751eaad74faeb564239fdeb4c, type: 3}
   editCompute: {fileID: 7200000, guid: 865b82eeee4482a4eae431180e801a76, type: 3}
-  setFloatsCompute: {fileID: 7200000, guid: d6498e7596718e147973b431e8686608, type: 3}
-  readFloatDataCompute: {fileID: 7200000, guid: 2737a749277e36f49b03e1ef268f73e7, type: 3}
+  setFloatsCompute: {fileID: 7200000, guid: 9f2caaf3e347fec4e853fb4785df0edc, type: 3}
   material: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
 --- !u!1 &963194225
 GameObject:
@@ -717,7 +717,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1100, y: 480}
+  m_AnchoredPosition: {x: 1067, y: 480}
   m_SizeDelta: {x: 600, y: 400}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1321840756
@@ -742,7 +742,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Undo - Ctrl + Z\n\nTab - Sphere Tool\n     - Right click, Subtract\n    
     - Left Click, Add\n\nSave - Ctrl + S\nLoad - Ctrl + L\nExport - Ctrl + E\nNew
-    - Ctrl + N\n\nPlus Tool Size - Numpad +\nMinus Tool Size - Numpad -"
+    - Ctrl + N\n\nPlus Tool Size - Right Bracket\nMinus Tool Size - Left Bracket\n\nRotate
+    - Middle-Mouse"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -869,7 +870,7 @@ MonoBehaviour:
   anchor: {fileID: 828002947}
   cameraTransform: {fileID: 963194228}
   mouseSens: 5
-  zoomSpeed: 6
+  zoomSpeed: 12
   rotateMouseButton: 2
   pan: 0
 --- !u!1 &1540100335
@@ -1018,7 +1019,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdcd356750c9bbb438b26e23e67b90ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoSaveInterval: 150
+  autoSaveInterval: 200
   autoSave: 1
 --- !u!4 &1634260338
 Transform:
@@ -1200,7 +1201,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0880ab882de9fc45a159383c787de2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Brush: 1
+  Brush: 0
   Name: Save
   KeyBind:
     KeyCodes: 3201000073000000
@@ -1216,7 +1217,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67463bbccb2b74243a3628bdb87d9747, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  delayBetweenToolSelection: 0.2
+  delayBetweenToolSelection: 0.1
 --- !u!114 &1895845149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1248,8 +1249,9 @@ MonoBehaviour:
   Brush: 0
   Name: Undo
   KeyBind:
-    KeyCodes: 320100007a000000
-  undo: 1
+    KeyCodes: 3201000061000000
+  amountOfStepsPerActivation: 5
+  maxUndoCount: 100
 --- !u!114 &1895845153
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1265,7 +1267,7 @@ MonoBehaviour:
   Brush: 0
   Name: Decrease Size
   KeyBind:
-    KeyCodes: 0d010000
+    KeyCodes: 5b000000
   increment: -0.5
 --- !u!114 &1895845154
 MonoBehaviour:
@@ -1282,7 +1284,7 @@ MonoBehaviour:
   Brush: 0
   Name: Increase Size
   KeyBind:
-    KeyCodes: 0e010000
+    KeyCodes: 5d000000
   increment: 0.5
 --- !u!114 &1895845155
 MonoBehaviour:
@@ -1296,7 +1298,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bf589d72b995314fb4b1fdc3cfc52ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Brush: 1
+  Brush: 0
   Name: Create New.
   KeyBind:
     KeyCodes: 320100006e000000

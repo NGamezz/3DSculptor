@@ -33,6 +33,16 @@ public class TextPopUpManager : MonoBehaviour
         currentPopupRoutine ??= StartCoroutine(PlayPopup(textPopupQueue.Dequeue()));
     }
 
+    private void OnEnable ()
+    {
+        EventManager<TextPopup>.AddListener(EventType.OnQueuePopup, QueuePopup);
+    }
+
+    private void OnDisable ()
+    {
+        EventManager<TextPopup>.RemoveListener(EventType.OnQueuePopup, QueuePopup);
+    }
+
     private void Start ()
     {
         if ( DataHolder.TextPopupManager != null )

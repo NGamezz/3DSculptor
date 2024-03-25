@@ -47,7 +47,8 @@ public class ExportMeshToOBJ
         await writer.WriteAsync(GetMeshOBJ(mesh.name, mesh));
         writer.Close();
 
-        DataHolder.TextPopupManager.QueuePopup(new(2, $"Exported To : {path}"));
+        EventManager<TextPopup>.InvokeEvent(new(2, $"Exported To : {path}"), EventType.OnQueuePopup);
+        //DataHolder.TextPopupManager.QueuePopup(new(2, $"Exported To : {path}"));
     }
 
     public static string GetMeshOBJ(string name, Mesh mesh)

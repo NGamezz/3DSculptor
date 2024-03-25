@@ -15,21 +15,21 @@ int GetIndexFromPosition(int3 position, int size)
 [numthreads(8, 8, 8)]
 void CSMain(int3 id : SV_DispatchThreadID)
 {
-    const int b = 4;
-    if (id.x >= size - b || id.y >= size - b || id.z >= size - b)
-    {
-        return;
-    }
-    if (id.x <= b || id.y <= b || id.z <= b)
-    {
-        return;
-    }
+    //const int b = 4;
+    //if (id.x >= size - b || id.y >= size - b || id.z >= size - b)
+    //{
+    //    return;
+    //}
+    //if (id.x <= b || id.y <= b || id.z <= b)
+    //{
+    //    return;
+    //}
 
     int3 offset = id - brushCentre;
     int sqrDst = dot(offset, offset);
 
     if (sqrDst <= brushRadius * brushRadius)
     {   
-        EditTexture[id] = changedFloats[id.x];
+        EditTexture[id] = changedFloats[GetIndexFromPosition(id, size)];
     }
 }

@@ -2,7 +2,7 @@ using Unity.Mathematics;
 
 public class LoadTool : Tool
 {
-    private MeshCreator meshCreator;
+    //private MeshCreator meshCreator;
 
     public override void Activate(Brush previousBrush)
     {
@@ -15,11 +15,12 @@ public class LoadTool : Tool
 
     private void HandleLoad ( SaveData<float[], int3> data)
     {
-        meshCreator.LoadSaveData(data);
+        EventManager<SaveData<float[], int3>>.InvokeEvent(data, EventType.OnDataLoad);
+        //meshCreator.LoadSaveData(data);
     }
 
     private void Awake()
     {
-        meshCreator = FindAnyObjectByType<MeshCreator>();
+        //meshCreator = FindAnyObjectByType<MeshCreator>();
     }
 }

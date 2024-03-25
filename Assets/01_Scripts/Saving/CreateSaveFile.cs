@@ -14,7 +14,7 @@ public class SaveData<T, U>
 public class CreateSaveFile
 {
     //Todo : Increase index if file exists, until index reaches max amount, then overwrite first file and continue as before.
-    public static void SaveToFile<T, U> ( ref SaveData<T, U> thingToSave, string path )
+    public static void SaveToFile<T, U> ( SaveData<T, U> thingToSave, string path )
     {
         var bFormatter = new BinaryFormatter();
 
@@ -33,14 +33,15 @@ public class CreateSaveFile
                 stream = File.Create(path);
                 bFormatter.Serialize(stream, thingToSave);
 
-                DataHolder.TextPopupManager.QueuePopup(new(4.0f, $"Saved File To : {path}"));
+                EventManager<TextPopup>.InvokeEvent(new(4.0f, $"Saved File To : {path}"), EventType.OnQueuePopup);
             }
             else
             {
                 stream = File.Open(path, FileMode.Truncate);
                 bFormatter.Serialize(stream, thingToSave);
 
-                DataHolder.TextPopupManager.QueuePopup(new(4.0f, $"Saved File To : {path}"));
+                EventManager<TextPopup>.InvokeEvent(new(4.0f, $"Saved File To : {path}"), EventType.OnQueuePopup);
+                //DataHolder.TextPopupManager.QueuePopup(new(4.0f, $"Saved File To : {path}"));
             }
         }
         catch ( Exception e )
