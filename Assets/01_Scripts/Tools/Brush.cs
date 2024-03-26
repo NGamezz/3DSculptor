@@ -95,7 +95,6 @@ public class Brush : Tool, ISizeChangable
         }
     }
 
-
     protected void UpdateToolSize ()
     {
         ghost.transform.localScale = Vector3.one * (brushData.size * 2.0f);

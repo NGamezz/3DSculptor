@@ -1,11 +1,10 @@
-using System.Net.NetworkInformation;
 using Unity.Mathematics;
 using UnityEngine;
 
 public class SineAnimate : MonoBehaviour
 {
     [SerializeField] private float sineStrength = 0.5f;
-    [SerializeField] private float frequency = 1.0f;
+    [SerializeField] private float frequency = 4.0f;
 
     private Vector3 cachedPosition = Vector3.zero;
 
