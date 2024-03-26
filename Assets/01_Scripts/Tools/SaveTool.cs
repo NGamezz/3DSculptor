@@ -1,10 +1,11 @@
+using System;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 public class SaveTool : Tool
 {
-    private MeshCreator meshCreator;
+    public Func<RenderTexture> OnRequestRenderTexture;
 
     private string path = "";
 
@@ -13,16 +14,15 @@ public class SaveTool : Tool
         path = "";
     }
 
-    public override void Deactivate()
+    public override void Deactivate ()
     {
     }
 
-    public override async void Activate(Brush previousTool)
+    public override async void Activate ( Brush previousTool )
     {
         EventManager<TextPopup>.InvokeEvent(new(2, "Starting Save."), EventType.OnQueuePopup);
-        //DataHolder.TextPopupManager.QueuePopup(new(2, "Starting Save."));
 
-        var rawDensityTexture = meshCreator.GetRenderTexture();
+        var rawDensityTexture = OnRequestRenderTexture?.Invoke();
 
         var request = await AsyncGPUReadback.RequestAsync(rawDensityTexture);
 
@@ -54,10 +54,10 @@ public class SaveTool : Tool
             dataB = dimensions
         };
 
-        if (path == "")
+        if ( path == "" )
         {
             Debug.Log("Path does not exist yet.");
-            SimpleFileBrowser.FileBrowser.ShowSaveDialog((path) => HandleSave(path, saveData), () => EventManager<TextPopup>.InvokeEvent(new(2, "Cancelled Save."), EventType.OnQueuePopup), SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
+            SimpleFileBrowser.FileBrowser.ShowSaveDialog(( path ) => HandleSave(path, saveData), () => EventManager<TextPopup>.InvokeEvent(new(2, "Cancelled Save."), EventType.OnQueuePopup), SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
         }
         else
         {
@@ -66,13 +66,24 @@ public class SaveTool : Tool
         }
     }
 
-    private void Awake()
+    private void StartSave ()
     {
-        if (meshCreator == null)
-            meshCreator = FindAnyObjectByType<MeshCreator>();
+        Activate(null);
     }
 
-    private void HandleSave<T,U>(string[] path, SaveData<T,U> data)
+    public void OnStart ()
+    {
+        EventManager<bool>.AddListener(EventType.StartSave, StartSave);
+        EventManager<bool>.AddListener(EventType.OnCreateNew, ResetPath);
+    }
+
+    public void OnDisable ()
+    {
+        EventManager<bool>.RemoveListener(EventType.StartSave, StartSave);
+        EventManager<bool>.RemoveListener(EventType.OnCreateNew, ResetPath);
+    }
+
+    private void HandleSave<T, U> ( string[] path, SaveData<T, U> data )
     {
         this.path = path[0];
         CreateSaveFile.SaveToFile(data, this.path);

@@ -9,6 +9,7 @@ public enum EventType
     OnPerformAction = 3,
     OnEdit = 4,
     OnQueuePopup = 5,
+    StartSave = 6
 }
 
 public static class EventManager<T>

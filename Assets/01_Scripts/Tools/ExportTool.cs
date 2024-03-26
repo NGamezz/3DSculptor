@@ -4,9 +4,9 @@ public class ExportTool : Tool
 {
     private ChunksHolder chunksHolder;
 
-    private void Start ()
+    public void SetChunksHolder ( ChunksHolder chunksHolder )
     {
-        chunksHolder = FindAnyObjectByType<ChunksHolder>();
+        this.chunksHolder = chunksHolder;
     }
 
     public override void Activate ( Brush previousTool )

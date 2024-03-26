@@ -1,77 +1,144 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ToolHandler : MonoBehaviour
+[Serializable]
+public class ToolHandler
 {
     [SerializeField] private float delayBetweenToolSelection = 0.5f;
 
-    private Tool[] tools;
+    [SerializeField] private BrushData brushData;
+
+    [SerializeField] private float sizeToolIncrement;
+
+    [SerializeField] private UndoSettings undoSettings;
+
+    [SerializeField] private KeyBindSettings sphereToolKeybinds;
+    [SerializeField] private KeyBindSettings undoToolKeyBinds;
+    [SerializeField] private KeyBindSettings exportToolKeyBinds;
+    [SerializeField] private KeyBindSettings saveToolKeyBinds;
+    [SerializeField] private KeyBindSettings createNewToolKeyBinds;
+    [SerializeField] private KeyBindSettings loadToolKeyBinds;
+    [SerializeField] private KeyBindSettings SizePlusToolKeyBinds;
+    [SerializeField] private KeyBindSettings SizeMinusToolKeyBinds;
+
+    [SerializeField] private List<Tool> tools = new();
     private Tool currentTool;
 
     private bool canSwapTool = true;
 
-    private void Start()
+    public void InitializeTools ( ref InputHandler inputHandler, ref Action OnUpdate, ref Action OnDisableEvent, ref MeshCreator meshCreator )
     {
-        tools = FindObjectsByType<Tool>(FindObjectsSortMode.None);
+        SphereTool sphereTool = new();
+        OnUpdate += sphereTool.OnUpdate;
+        OnDisableEvent += sphereTool.OnDisable;
 
-        if (tools.Length == 0)
-            throw new Exception("No Tools Found.");
+        sphereTool.SetBrushData(brushData);
+        sphereTool.OnAwake();
 
-        foreach (var tool in tools)
+        sphereTool.KeyBind = sphereToolKeybinds.KeyCodes;
+
+        currentTool = sphereTool;
+        sphereTool.Activate(null);
+
+        SaveTool saveTool = new()
         {
-            tool.Deactivate();
-        }
+            OnRequestRenderTexture = meshCreator.GetRenderTexture,
+            KeyBind = saveToolKeyBinds.KeyCodes
+        };
+        OnDisableEvent += saveTool.OnDisable;
+        saveTool.OnStart();
 
-        currentTool = FindAnyObjectByType<SphereTool>();
-        if (currentTool == null)
-            currentTool = tools[0];
+        var chunksHolder = UnityEngine.Object.FindAnyObjectByType<ChunksHolder>();
 
-        currentTool.Activate(null);
+        ExportTool exportTool = new()
+        {
+            KeyBind = exportToolKeyBinds.KeyCodes
+        };
+        exportTool.SetChunksHolder(chunksHolder);
+
+        CreateNew createNew = new()
+        {
+            KeyBind = createNewToolKeyBinds.KeyCodes
+        };
+        createNew.OnStart();
+
+        LoadTool loadTool = new()
+        {
+            KeyBind = loadToolKeyBinds.KeyCodes
+        };
+
+        UndoTool undoTool = new()
+        {
+            KeyBind = undoToolKeyBinds.KeyCodes
+        };
+        undoTool.SetUndoSettings(undoSettings);
+        undoTool.OnEnable();
+        OnDisableEvent += undoTool.OnDisable;
+
+        ToolSizeTool sizeToolPlus = new()
+        {
+            increment = sizeToolIncrement,
+            KeyBind = SizePlusToolKeyBinds.KeyCodes
+        };
+        sizeToolPlus.OnStart();
+
+        ToolSizeTool sizeToolMinus = new()
+        {
+            increment = -sizeToolIncrement,
+            KeyBind = SizeMinusToolKeyBinds.KeyCodes
+        };
+        sizeToolMinus.OnStart();
+
+        inputHandler.BindInputToCommand(sphereTool, null, sphereTool.KeyBind);
+        inputHandler.BindInputToCommand(saveTool, null, saveTool.KeyBind);
+        inputHandler.BindInputToCommand(exportTool, null, exportTool.KeyBind);
+        inputHandler.BindInputToCommand(createNew, null, createNew.KeyBind);
+        inputHandler.BindInputToCommand(loadTool, null, loadTool.KeyBind);
+        inputHandler.BindInputToCommand(undoTool, null, undoTool.KeyBind);
+        inputHandler.BindInputToCommand(sizeToolPlus, null, sizeToolPlus.KeyBind);
+        inputHandler.BindInputToCommand(sizeToolMinus, null, sizeToolMinus.KeyBind);
+
+        AddTool(sphereTool, sizeToolMinus, sizeToolPlus, saveTool, exportTool, loadTool, undoTool, createNew);
     }
 
-    private void FixedUpdate()
+    public void AddTool ( params Tool[] tool )
     {
-        CheckToolSwitch(SwitchCallback);
-    }
-
-    private void CheckToolSwitch(Action<Tool> callBack)
-    {
-        if (!canSwapTool)
+        if ( tool.Length < 1 )
             return;
 
-        foreach (var tool in tools)
+        for ( int i = 0; i < tool.Length; i++ )
         {
-            if (tool.KeyBind.IsKeyBindActivated())
-            {
-                callBack?.Invoke(tool);
-                StartCoroutine(ResetToolSelection());
+            if ( tools.Contains(tool[i]) )
                 return;
-            }
+
+            tools.Add(tool[i]);
         }
     }
 
-    private IEnumerator ResetToolSelection()
+    public void ActivateTool ( Tool tool )
     {
-        canSwapTool = false;
-        Debug.Log("Resetting Swap.");
-        yield return new WaitForSeconds(delayBetweenToolSelection);
-        canSwapTool = true;
-    }
-
-    private void SwitchCallback(Tool tool)
-    {
-        if (tool.Brush == false)
+        if(tool.IgnoreCooldown)
         {
-            tool.Activate((Brush)currentTool);
+            tool.Activate(currentTool.Brush ? (Brush)currentTool : null);
             return;
         }
 
-        if (tool == currentTool)
+        if ( !canSwapTool )
             return;
 
         currentTool.Deactivate();
+        var previousTool = currentTool;
         currentTool = tool;
-        currentTool.Activate(null);
+        currentTool.Activate(tool.Brush ? null : (Brush)previousTool);
+        ResetToolSelection();
+    }
+
+    private async void ResetToolSelection ()
+    {
+        canSwapTool = false;
+        Debug.Log("Resetting Swap.");
+        await Awaitable.WaitForSecondsAsync(delayBetweenToolSelection);
+        canSwapTool = true;
     }
 }

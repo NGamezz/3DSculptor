@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -127,20 +126,7 @@ public class MeshCreator : MonoBehaviour
         Run(false);
     }
 
-    public class ActionData
-    {
-        public int radius;
-        public PointData[] floats;
-        public Vector3 position;
-    }
-
-    public struct PointData
-    {
-        public int3 index;
-        public float value;
-    }
-
-    private void Start ()
+    public void OnStart ()
     {
         Run();
     }

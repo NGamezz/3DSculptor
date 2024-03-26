@@ -1,57 +1,61 @@
-﻿using NaughtyAttributes;
-using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Brush : Tool, ISizeChangable
 {
     protected GameObject ghost;
     protected bool state = false;
-    protected new Camera camera;
-    [SerializeField] protected Material ghostMaterial;
+    protected Camera camera;
 
-    [Range(1.0f, 50.0f)]
-    [SerializeField] protected float size = 5.0f;
-
-    [Layer]
-    [SerializeField] protected int ownLayer;
+    protected BrushData brushData;
 
     protected Vector3 targetPosition;
 
-    [Range(0.001f, 0.1f)]
-    [SerializeField] protected float strength = 0.05f;
+    private BrushData cacheBrushData;
 
     private RaycastHit[] results = new RaycastHit[1];
-    private MeshCreator meshCreator;
 
-    /// <summary>
-    /// Additive
-    /// </summary>
-    /// <param name="size"></param>
+    public void SetBrushData ( BrushData brushData )
+    {
+        Debug.Log(brushData);
+        this.brushData = brushData;
+        cacheBrushData = brushData;
+        Debug.Log(this.brushData);
+    }
+
+    public void OnDisable ()
+    {
+        brushData.ownLayer = cacheBrushData.ownLayer;
+        brushData.size = cacheBrushData.size;
+        brushData.weight = cacheBrushData.weight;
+        brushData.ghostMaterial = cacheBrushData.ghostMaterial;
+    }
+
     public void ChangeSize ( float size )
     {
+        if ( brushData.size + size <= 0 || brushData.size + size >= 50)
+            return;
+
+        brushData.size += size;
         UpdateToolSize();
-        this.size += size;
     }
 
     public override void Activate ( Brush previousTool )
     {
         state = true;
         ghost.SetActive(true);
-        Debug.Log("activated");
     }
 
     public override void Deactivate ()
     {
         state = false;
         ghost.SetActive(false);
-        Debug.Log("deactivated");
     }
 
     protected void GetPositionOnModel ()
     {
         var ray = camera.ScreenPointToRay(Input.mousePosition);
 
-        if ( Physics.RaycastNonAlloc(ray, results) == 0 || results[0].transform.gameObject.layer == ownLayer )
+        if ( Physics.RaycastNonAlloc(ray, results) == 0 || results[0].transform.gameObject.layer == brushData.ownLayer )
         {
             targetPosition = Vector3.zero;
             return;
@@ -61,11 +65,11 @@ public class Brush : Tool, ISizeChangable
         ghost.transform.position = targetPosition;
     }
 
-    protected virtual void Awake ()
+    public virtual void OnAwake ()
     {
         camera = Camera.main;
-        meshCreator = FindAnyObjectByType<MeshCreator>();
         Brush = true;
+        IgnoreCooldown = false;
         UpdateToolSize();
     }
 
@@ -74,30 +78,28 @@ public class Brush : Tool, ISizeChangable
         BrushActionData actionData = new()
         {
             position = point,
-            radius = size,
+            radius = brushData.size,
         };
 
         if ( state )
         {
-            actionData.strenght = -strength;
+            actionData.strenght = -brushData.weight;
 
             EventManager<BrushActionData>.InvokeEvent(actionData, EventType.OnEdit);
-            //meshCreator.AlterModel(point, -strength, this.size);
         }
         else
         {
-            actionData.strenght = strength;
+            actionData.strenght = brushData.weight;
 
             EventManager<BrushActionData>.InvokeEvent(actionData, EventType.OnEdit);
-            //meshCreator.AlterModel(point, strength, this.size);
         }
     }
 
+
     protected void UpdateToolSize ()
     {
-        ghost.transform.localScale = Vector3.one * (this.size * 2.0f);
+        ghost.transform.localScale = Vector3.one * (brushData.size * 2.0f);
     }
-
 }
 
 public struct BrushActionData

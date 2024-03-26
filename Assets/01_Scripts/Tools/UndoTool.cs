@@ -1,23 +1,26 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
-using UnityEngine;
 
 public class UndoTool : Tool
 {
-    private DoubleStack<MeshCreator.ActionData> actionHistory = new();
+    private DoubleStack<ActionData> actionHistory = new();
 
-    [SerializeField] private int amountOfStepsPerActivation = 3;
-    [SerializeField] private int maxUndoCount = 25;
+    private UndoSettings undoSettings;
 
-    private void OnEnable ()
+    public void SetUndoSettings ( UndoSettings settings )
     {
-        EventManager<MeshCreator.ActionData>.AddListener(EventType.OnPerformAction, PerformAction);
+        this.undoSettings = settings;
+    }
+
+    public void OnEnable ()
+    {
+        EventManager<ActionData>.AddListener(EventType.OnPerformAction, PerformAction);
         EventManager<SaveData<float[], int3>>.AddListener(EventType.OnDataLoad, ResetActionStack);
     }
 
-    private void OnDisable ()
+    public void OnDisable ()
     {
-        EventManager<MeshCreator.ActionData>.RemoveListener(EventType.OnPerformAction, PerformAction);
+        EventManager<ActionData>.RemoveListener(EventType.OnPerformAction, PerformAction);
         EventManager<SaveData<float[], int3>>.RemoveListener(EventType.OnDataLoad, ResetActionStack);
     }
 
@@ -26,11 +29,11 @@ public class UndoTool : Tool
         actionHistory.Clear();
     }
 
-    private void PerformAction ( MeshCreator.ActionData actionData )
+    private void PerformAction ( ActionData actionData )
     {
         actionHistory.Push(actionData);
 
-        if ( actionHistory.Count >= maxUndoCount * amountOfStepsPerActivation )
+        if ( actionHistory.Count >= undoSettings.maxAmountOfStoredUndos * undoSettings.amountOfActivationsPerCall )
         {
             actionHistory.PopBottom();
         }
@@ -41,7 +44,7 @@ public class UndoTool : Tool
         if ( actionHistory.Count <= 0 )
             return;
 
-        for ( int i = 0; i < amountOfStepsPerActivation; i++ )
+        for ( int i = 0; i < undoSettings.amountOfActivationsPerCall; i++ )
         {
             if ( actionHistory.Count <= 0 )
             { continue; }
@@ -51,7 +54,7 @@ public class UndoTool : Tool
             if ( currentData == null )
                 return;
 
-            EventManager<MeshCreator.ActionData>.InvokeEvent(currentData, EventType.OnUndo);
+            EventManager<ActionData>.InvokeEvent(currentData, EventType.OnUndo);
         }
     }
 

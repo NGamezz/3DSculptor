@@ -1,18 +1,16 @@
+using System;
 using UnityEngine;
 
-public class AutoSave : MonoBehaviour
+[Serializable]
+public class AutoSave
 {
     [Tooltip("In Seconds."), Range(2.0f, 500.0f)]
     [SerializeField] private float autoSaveInterval = 10.0f;
 
     [SerializeField] private bool autoSave = true;
 
-    private SaveTool saveTool;
-
-    private void Start ()
+    public void StartAutoSave()
     {
-        saveTool = FindAnyObjectByType<SaveTool>();
-
         SaveOnInterval();
     }
 
@@ -22,7 +20,7 @@ public class AutoSave : MonoBehaviour
         {
             await Awaitable.WaitForSecondsAsync(autoSaveInterval);
 
-            saveTool.Activate(null);
+            EventManager<bool>.InvokeEvent(EventType.StartSave);
         }
     }
 }

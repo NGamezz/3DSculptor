@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class ToolSizeTool : Tool
 {
-    [SerializeField] private float increment = 1;
+    public float increment = 1;
 
-    private void Start ()
+    public void OnStart ()
     {
         Brush = false;
     }

@@ -5,11 +5,21 @@ using UnityEngine;
 [Serializable]
 public class KeyBind
 {
-    public List<KeyCode> KeyCodes = new();
+    public KeyCode[] KeyCodes;
+
+    public Action UponPressed;
+
+    public void CheckKeyBindPress()
+    {
+        if(IsKeyBindActivated())
+        {
+            UponPressed?.Invoke();
+        }
+    }
 
     public bool IsKeyBindActivated ()
     {
-        if(KeyCodes.Count == 0)
+        if(KeyCodes.Length == 0)
         {
             return false;
         }

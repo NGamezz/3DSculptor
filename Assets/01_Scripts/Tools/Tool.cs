@@ -1,12 +1,14 @@
 using UnityEngine;
 
-public abstract class Tool : MonoBehaviour
+public abstract class Tool
 {
-    public bool Brush = true;
+    public bool Brush = false;
+
+    public bool IgnoreCooldown = true;
 
     public string Name;
 
-    public KeyBind KeyBind;
+    public KeyCode[] KeyBind;
 
     public abstract void Activate(Brush previousTool);
     public abstract void Deactivate();
