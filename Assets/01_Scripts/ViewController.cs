@@ -29,6 +29,7 @@ public class ViewController : MonoBehaviour
             HandlePanning();
         else
             HandleCameraRotation();
+
         ZoomHandling();
     }
 
@@ -38,7 +39,7 @@ public class ViewController : MonoBehaviour
 
         var translation = 10.0f * Input.mouseScrollDelta.y * Time.deltaTime * zoomSpeed * direction.normalized;
 
-        if ( Vector3.Distance(anchor.position, cameraTransform.position + translation) < 10.0f )
+        if ( Vector3.Distance(anchor.position, cameraTransform.position + translation) < 20.0f )
         { return; }
 
         cameraTransform.Translate(10.0f * Input.mouseScrollDelta.y * Time.deltaTime * zoomSpeed * direction.normalized, Space.Self);

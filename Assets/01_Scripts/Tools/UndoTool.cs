@@ -14,14 +14,14 @@ public class UndoTool : Tool
 
     public void OnEnable ()
     {
-        EventManager<ActionData>.AddListener(EventType.OnPerformAction, PerformAction);
-        EventManager<SaveData<float[], int3>>.AddListener(EventType.OnDataLoad, ResetActionStack);
+        EventManagerGeneric<ActionData>.AddListener(EventType.OnPerformAction, PerformAction);
+        EventManagerGeneric<SaveData<float[], int3>>.AddListener(EventType.OnDataLoad, ResetActionStack);
     }
 
     public void OnDisable ()
     {
-        EventManager<ActionData>.RemoveListener(EventType.OnPerformAction, PerformAction);
-        EventManager<SaveData<float[], int3>>.RemoveListener(EventType.OnDataLoad, ResetActionStack);
+        EventManagerGeneric<ActionData>.RemoveListener(EventType.OnPerformAction, PerformAction);
+        EventManagerGeneric<SaveData<float[], int3>>.RemoveListener(EventType.OnDataLoad, ResetActionStack);
     }
 
     private void ResetActionStack ( SaveData<float[], int3> _ )
@@ -54,7 +54,7 @@ public class UndoTool : Tool
             if ( currentData == null )
                 return;
 
-            EventManager<ActionData>.InvokeEvent(currentData, EventType.OnUndo);
+            EventManagerGeneric<ActionData>.InvokeEvent(currentData, EventType.OnUndo);
         }
     }
 

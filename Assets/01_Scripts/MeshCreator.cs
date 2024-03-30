@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using System;
 using UnityEngine.Rendering;
 
 //Original Version Was Created By Sebastian Lague, and can be found at the bottom of this file or on https://github.com/SebLague/Terraforming/tree/main.
@@ -36,13 +37,44 @@ public class MeshCreator : MonoBehaviour
 
     private VertexData[] vertexDataArray;
 
+    public void SetResolution ( string resolution )
+    {
+        if ( !Int32.TryParse(resolution, out int res) )
+            return;
+
+        if ( res > 50 || res < 20 )
+            return;
+
+        numPointsPerAxis = res;
+
+        ReleaseBuffers();
+        DeleteChunks();
+
+        Run(false);
+    }
+
+    public void SetBoundsSize ( string input )
+    {
+        if ( !Int32.TryParse(input, out int size) )
+        {
+            return;
+        }
+
+        if ( size >= 20 )
+        {
+            boundsSize = size;
+            DeleteChunks();
+            Run(false);
+        }
+    }
+
     public RenderTexture GetRenderTexture ()
     {
         return rawDensityTexture;
     }
 
     //Todo: Potentially optimize it so it doesn't have to check every chunk for a sphere intersection.
-    public void AlterModel ( BrushActionData brushData)
+    public void AlterModel ( BrushActionData brushData )
     {
         float radius = brushData.radius;
         float weight = brushData.strenght;
@@ -90,9 +122,9 @@ public class MeshCreator : MonoBehaviour
             position = point,
         };
 
-        EventManager<ActionData>.InvokeEvent(currentActionData, EventType.OnPerformAction);
+        EventManagerGeneric<ActionData>.InvokeEvent(currentActionData, EventType.OnPerformAction);
 
-                float worldRadius = (editRadius + 1) * editPixelWorldSize;
+        float worldRadius = (editRadius + 1) * editPixelWorldSize;
         for ( int i = 0; i < chunks.Length; i++ )
         {
             var chunk = chunks[i];
@@ -116,7 +148,9 @@ public class MeshCreator : MonoBehaviour
 
         Destroy(depthTexture);
 
-        EventManager<TextPopup>.InvokeEvent(new(2, "Loaded Data. Reconstructing."), EventType.OnQueuePopup);
+        EventManagerGeneric<TextPopup>.InvokeEvent(new(2, "Loaded Data. Reconstructing."), EventType.OnQueuePopup);
+
+        DeleteChunks();
 
         Run(true);
     }
@@ -206,6 +240,8 @@ public class MeshCreator : MonoBehaviour
                 Destroy(meshHolder);
             }
         }
+
+        chunks = null;
     }
 
     private void ComputeDensity ()
@@ -278,15 +314,15 @@ public class MeshCreator : MonoBehaviour
         ComputeHelper.Release(triCountBuffer, triangleBuffer, floatBuffer, floatDataBuffer, floatCountBuffer);
     }
 
-    private void OnDisable ()
+    public void OnDisable ()
     {
-        EventManager<bool>.RemoveListener(EventType.OnCreateNew, CreateNew);
-        EventManager<SaveData<float[], int3>>.RemoveListener(EventType.OnDataLoad, LoadSaveData);
-        EventManager<ActionData>.RemoveListener(EventType.OnUndo, Undo);
-        EventManager<BrushActionData>.RemoveListener(EventType.OnEdit, AlterModel);
+        EventManager.RemoveListener(EventType.OnCreateNew, CreateNew);
+        EventManagerGeneric<SaveData<float[], int3>>.RemoveListener(EventType.OnDataLoad, LoadSaveData);
+        EventManagerGeneric<ActionData>.RemoveListener(EventType.OnUndo, Undo);
+        EventManagerGeneric<BrushActionData>.RemoveListener(EventType.OnEdit, AlterModel);
     }
 
-    private void OnDestroy ()
+    public void OnDestroy ()
     {
         ReleaseBuffers();
         DeleteChunks();
@@ -294,10 +330,10 @@ public class MeshCreator : MonoBehaviour
 
     private void OnEnable ()
     {
-        EventManager<BrushActionData>.AddListener(EventType.OnEdit, AlterModel);
-        EventManager<bool>.AddListener(EventType.OnCreateNew, CreateNew);
-        EventManager<SaveData<float[], int3>>.AddListener(EventType.OnDataLoad, LoadSaveData);
-        EventManager<ActionData>.AddListener(EventType.OnUndo, Undo);
+        EventManagerGeneric<BrushActionData>.AddListener(EventType.OnEdit, AlterModel);
+        EventManager.AddListener(EventType.OnCreateNew, CreateNew);
+        EventManagerGeneric<SaveData<float[], int3>>.AddListener(EventType.OnDataLoad, LoadSaveData);
+        EventManagerGeneric<ActionData>.AddListener(EventType.OnUndo, Undo);
     }
 
     private void CreateChunks ()

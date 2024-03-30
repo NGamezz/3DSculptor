@@ -44,7 +44,7 @@ public class ToolHandler
         SaveTool saveTool = new()
         {
             OnRequestRenderTexture = meshCreator.GetRenderTexture,
-            KeyBind = saveToolKeyBinds.KeyCodes
+            KeyBind = saveToolKeyBinds.KeyCodes,
         };
         OnDisableEvent += saveTool.OnDisable;
         saveTool.OnStart();
@@ -118,7 +118,7 @@ public class ToolHandler
 
     public void ActivateTool ( Tool tool )
     {
-        if(tool.IgnoreCooldown)
+        if ( tool.IgnoreCooldown )
         {
             tool.Activate(currentTool.Brush ? (Brush)currentTool : null);
             return;

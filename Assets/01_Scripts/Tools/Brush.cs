@@ -85,13 +85,13 @@ public class Brush : Tool, ISizeChangable
         {
             actionData.strenght = -brushData.weight;
 
-            EventManager<BrushActionData>.InvokeEvent(actionData, EventType.OnEdit);
+            EventManagerGeneric<BrushActionData>.InvokeEvent(actionData, EventType.OnEdit);
         }
         else
         {
             actionData.strenght = brushData.weight;
 
-            EventManager<BrushActionData>.InvokeEvent(actionData, EventType.OnEdit);
+            EventManagerGeneric<BrushActionData>.InvokeEvent(actionData, EventType.OnEdit);
         }
     }
 

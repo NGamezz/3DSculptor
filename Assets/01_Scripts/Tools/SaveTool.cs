@@ -9,6 +9,8 @@ public class SaveTool : Tool
 
     private string path = "";
 
+    private bool canSave = true;
+
     public void ResetPath ()
     {
         path = "";
@@ -20,9 +22,16 @@ public class SaveTool : Tool
 
     public override async void Activate ( Brush previousTool )
     {
-        EventManager<TextPopup>.InvokeEvent(new(2, "Starting Save."), EventType.OnQueuePopup);
+        if ( !canSave )
+            return;
+        canSave = false;
+
+        EventManagerGeneric<TextPopup>.InvokeEvent(new(2, "Starting Save."), EventType.OnQueuePopup);
 
         var rawDensityTexture = OnRequestRenderTexture?.Invoke();
+
+        if ( rawDensityTexture == null )
+            return;
 
         var request = await AsyncGPUReadback.RequestAsync(rawDensityTexture);
 
@@ -51,19 +60,34 @@ public class SaveTool : Tool
         {
             data = floats,
             buildVersion = 0,
-            dataB = dimensions
+            dataB = dimensions,
         };
 
         if ( path == "" )
         {
             Debug.Log("Path does not exist yet.");
-            SimpleFileBrowser.FileBrowser.ShowSaveDialog(( path ) => HandleSave(path, saveData), () => EventManager<TextPopup>.InvokeEvent(new(2, "Cancelled Save."), EventType.OnQueuePopup), SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
+            EventManagerGeneric<bool>.InvokeEvent(true, EventType.OnPause);
+            SimpleFileBrowser.FileBrowser.ShowSaveDialog(( path ) => HandleSave(path, saveData), UponCancelSave, SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
         }
         else
         {
             Debug.Log("Saving.");
             CreateSaveFile.SaveToFile(saveData, path);
         }
+
+        ResetCanSave();
+    }
+
+    private async void ResetCanSave ()
+    {
+        await Awaitable.WaitForSecondsAsync(0.5f);
+        canSave = true;
+    }
+
+    private void UponCancelSave ()
+    {
+        EventManagerGeneric<TextPopup>.InvokeEvent(new(2, "Cancelled Save."), EventType.OnQueuePopup);
+        EventManagerGeneric<bool>.InvokeEvent(false, EventType.OnPause);
     }
 
     private void StartSave ()
@@ -73,18 +97,19 @@ public class SaveTool : Tool
 
     public void OnStart ()
     {
-        EventManager<bool>.AddListener(EventType.StartSave, StartSave);
-        EventManager<bool>.AddListener(EventType.OnCreateNew, ResetPath);
+        EventManager.AddListener(EventType.StartSave, StartSave);
+        EventManager.AddListener(EventType.OnCreateNew, ResetPath);
     }
 
     public void OnDisable ()
     {
-        EventManager<bool>.RemoveListener(EventType.StartSave, StartSave);
-        EventManager<bool>.RemoveListener(EventType.OnCreateNew, ResetPath);
+        EventManager.RemoveListener(EventType.StartSave, StartSave);
+        EventManager.RemoveListener(EventType.OnCreateNew, ResetPath);
     }
 
     private void HandleSave<T, U> ( string[] path, SaveData<T, U> data )
     {
+        EventManagerGeneric<bool>.InvokeEvent(false, EventType.OnPause);
         this.path = path[0];
         CreateSaveFile.SaveToFile(data, this.path);
     }

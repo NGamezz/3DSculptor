@@ -2,17 +2,17 @@ using Unity.Mathematics;
 
 public class LoadTool : Tool
 {
-    public override void Activate(Brush previousBrush)
+    public override void Activate ( Brush previousBrush )
     {
-        LoadSaveFile.LoadFileAsync<float[], int3>((data) => HandleLoad(data));
+        LoadSaveFile.LoadFileAsync<float[], int3>(( data ) => HandleLoad(data));
     }
 
-    public override void Deactivate()
+    public override void Deactivate ()
     {
     }
 
-    private void HandleLoad ( SaveData<float[], int3> data)
+    private void HandleLoad ( SaveData<float[], int3> data )
     {
-        EventManager<SaveData<float[], int3>>.InvokeEvent(data, EventType.OnDataLoad);
+        EventManagerGeneric<SaveData<float[], int3>>.InvokeEvent(data, EventType.OnDataLoad);
     }
 }

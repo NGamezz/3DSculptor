@@ -9,14 +9,14 @@ public enum EventType
     OnPerformAction = 3,
     OnEdit = 4,
     OnQueuePopup = 5,
-    StartSave = 6
+    StartSave = 6,
+    OnPause = 7,
+    OnBoundsSizeChange = 8,
 }
 
-public static class EventManager<T>
+public static class EventManagerGeneric<T>
 {
     private static Dictionary<EventType, Action<T>> eventsParameter = new();
-
-    private static Dictionary<EventType, Action> events = new();
 
     public static void AddListener ( EventType type, Action<T> action )
     {
@@ -33,6 +33,27 @@ public static class EventManager<T>
         }
     }
 
+    public static void InvokeEvent ( T input, EventType type )
+    {
+        if ( !eventsParameter.ContainsKey(type) )
+            return;
+
+        eventsParameter[type].Invoke(input);
+    }
+
+    public static void RemoveListener ( EventType type, Action<T> action )
+    {
+        if ( !eventsParameter.ContainsKey(type) )
+            return;
+
+        eventsParameter[type] -= action;
+    }
+}
+
+public static class EventManager
+{
+    private static Dictionary<EventType, Action> events = new();
+
     public static void AddListener ( EventType type, Action action )
     {
         if ( action == null )
@@ -48,28 +69,12 @@ public static class EventManager<T>
         }
     }
 
-    public static void InvokeEvent ( T input, EventType type )
-    {
-        if ( !eventsParameter.ContainsKey(type) )
-            return;
-
-        eventsParameter[type].Invoke(input);
-    }
-
     public static void InvokeEvent(EventType type)
     {
         if ( !events.ContainsKey(type) )
             return;
 
         events[type].Invoke();
-    }
-
-    public static void RemoveListener(EventType type, Action<T> action)
-    {
-        if ( !eventsParameter.ContainsKey(type) )
-            return;
-
-        eventsParameter[type] -= action;
     }
 
     public static void RemoveListener(EventType type, Action action)

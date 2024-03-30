@@ -35,29 +35,12 @@ public class TextPopUpManager : MonoBehaviour
 
     private void OnEnable ()
     {
-        EventManager<TextPopup>.AddListener(EventType.OnQueuePopup, QueuePopup);
+        EventManagerGeneric<TextPopup>.AddListener(EventType.OnQueuePopup, QueuePopup);
     }
 
     private void OnDisable ()
     {
-        EventManager<TextPopup>.RemoveListener(EventType.OnQueuePopup, QueuePopup);
-    }
-
-    private void Start ()
-    {
-        if ( DataHolder.TextPopupManager != null )
-        {
-            Destroy(DataHolder.TextPopupManager);
-        }
-        DataHolder.TextPopupManager = this;
-    }
-
-    private void OnDestroy ()
-    {
-        if ( DataHolder.TextPopupManager != null && DataHolder.TextPopupManager == this )
-        {
-            DataHolder.TextPopupManager = null;
-        }
+        EventManagerGeneric<TextPopup>.RemoveListener(EventType.OnQueuePopup, QueuePopup);
     }
 
     private IEnumerator PlayPopup ( TextPopup popup )

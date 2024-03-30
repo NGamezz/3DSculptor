@@ -7,7 +7,7 @@ public class AutoSave
     [Tooltip("In Seconds."), Range(2.0f, 500.0f)]
     [SerializeField] private float autoSaveInterval = 10.0f;
 
-    [SerializeField] private bool autoSave = true;
+    public bool EnableAutoSave = true;
 
     public void StartAutoSave()
     {
@@ -16,11 +16,11 @@ public class AutoSave
 
     private async void SaveOnInterval ()
     {
-        while ( autoSave )
+        while ( EnableAutoSave )
         {
             await Awaitable.WaitForSecondsAsync(autoSaveInterval);
 
-            EventManager<bool>.InvokeEvent(EventType.StartSave);
+            EventManager.InvokeEvent(EventType.StartSave);
         }
     }
 }

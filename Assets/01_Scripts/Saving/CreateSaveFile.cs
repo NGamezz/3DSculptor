@@ -5,7 +5,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 [Serializable]
 public class SaveData<T, U>
 {
-    public int buildVersion = 0;
+    public int buildVersion = 1;
     public int saveVersion = 0;
     public T data;
     public U dataB;
@@ -32,14 +32,14 @@ public class CreateSaveFile
                 stream = File.Create(path);
                 bFormatter.Serialize(stream, thingToSave);
 
-                EventManager<TextPopup>.InvokeEvent(new(4.0f, $"Saved File To : {path}"), EventType.OnQueuePopup);
+                EventManagerGeneric<TextPopup>.InvokeEvent(new(4.0f, $"Saved File To : {path}"), EventType.OnQueuePopup);
             }
             else
             {
                 stream = File.Open(path, FileMode.Truncate);
                 bFormatter.Serialize(stream, thingToSave);
 
-                EventManager<TextPopup>.InvokeEvent(new(4.0f, $"Saved File To : {path}"), EventType.OnQueuePopup);
+                EventManagerGeneric<TextPopup>.InvokeEvent(new(4.0f, $"Saved File To : {path}"), EventType.OnQueuePopup);
             }
         }
         catch ( Exception e )

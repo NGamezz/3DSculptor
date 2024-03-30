@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d7492e30ced3ce4cbfdf25a46b27ba3, type: 3}
   m_Name: UndoSettings
   m_EditorClassIdentifier: 
-  maxAmountOfStoredUndos: 100
-  amountOfActivationsPerCall: 5
+  maxAmountOfStoredUndos: 150
+  amountOfActivationsPerCall: 10

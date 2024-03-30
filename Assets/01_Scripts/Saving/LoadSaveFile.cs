@@ -33,11 +33,19 @@ public class LoadSaveFile
                 stream.Flush();
                 stream.Close();
             }
+            EventManagerGeneric<bool>.InvokeEvent(false, EventType.OnPause);
         }
+    }
+
+    private static void UponCancel()
+    {
+        EventManagerGeneric<TextPopup>.InvokeEvent(new(2, "Cancelled Load."), EventType.OnQueuePopup);
+        EventManagerGeneric<bool>.InvokeEvent(false, EventType.OnPause);
     }
 
     public static void LoadFileAsync<T, U> ( Action<SaveData<T, U>> uponRetrieval )
     {
-        SimpleFileBrowser.FileBrowser.ShowLoadDialog(( path ) => HandleLoad(path, uponRetrieval), () => EventManager<TextPopup>.InvokeEvent(new(2, "Cancelled Load."), EventType.OnQueuePopup), SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
+        EventManagerGeneric<bool>.InvokeEvent(true, EventType.OnPause);
+        SimpleFileBrowser.FileBrowser.ShowLoadDialog(( path ) => HandleLoad(path, uponRetrieval), UponCancel, SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath);
     }
 }
