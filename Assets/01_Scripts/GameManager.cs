@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -30,16 +31,28 @@ public class GameManager : MonoBehaviour
         OnPause(false);
     }
 
-    public void SetAutoSave (bool autoSave)
+    public void SetAutoSave ( bool autoSave )
     {
         this.autoSave.EnableAutoSave = autoSave;
+    }
+
+    public void CloseApplication ()
+    {
+        Application.Quit();
     }
 
     void Start ()
     {
         string maxAmountOfundo = PlayerPrefs.GetString("MaxAmountOfUndos", undoSettings.maxAmountOfStoredUndos.ToString());
 
-        undoSettings.maxAmountOfStoredUndos = System.Int32.Parse(maxAmountOfundo);
+        if ( !Int32.TryParse(maxAmountOfundo, out int maxAmountOfUndos) )
+        {
+            undoSettings.maxAmountOfStoredUndos = 100;
+        }
+        else
+        {
+            undoSettings.maxAmountOfStoredUndos = maxAmountOfUndos;
+        }
 
         inputHandler.Initialize(ref OnUpdate, ref OnDestroyEvent);
         inputHandler.UponBindingActivation += toolHandler.ActivateTool;
