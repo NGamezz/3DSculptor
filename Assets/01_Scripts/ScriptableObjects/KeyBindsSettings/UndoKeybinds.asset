@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7287622077dc2dd4a964b7475be3484d, type: 3}
   m_Name: UndoKeybinds
   m_EditorClassIdentifier: 
-  KeyCodes: 3201000061000000
+  KeyCodes: 320100007a000000

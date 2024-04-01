@@ -20,6 +20,18 @@ public class SaveTool : Tool
     {
     }
 
+    public void OnStart ()
+    {
+        EventManager.AddListener(EventType.StartSave, StartSave);
+        EventManager.AddListener(EventType.OnCreateNew, ResetPath);
+    }
+
+    public void OnDisable ()
+    {
+        EventManager.RemoveListener(EventType.StartSave, StartSave);
+        EventManager.RemoveListener(EventType.OnCreateNew, ResetPath);
+    }
+
     public override async void Activate ( Brush previousTool )
     {
         if ( !canSave )
@@ -94,19 +106,7 @@ public class SaveTool : Tool
     {
         Activate(null);
     }
-
-    public void OnStart ()
-    {
-        EventManager.AddListener(EventType.StartSave, StartSave);
-        EventManager.AddListener(EventType.OnCreateNew, ResetPath);
-    }
-
-    public void OnDisable ()
-    {
-        EventManager.RemoveListener(EventType.StartSave, StartSave);
-        EventManager.RemoveListener(EventType.OnCreateNew, ResetPath);
-    }
-
+   
     private void HandleSave<T, U> ( string[] path, SaveData<T, U> data )
     {
         EventManagerGeneric<bool>.InvokeEvent(false, EventType.OnPause);

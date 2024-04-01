@@ -16,12 +16,12 @@ public class ExportTool : Tool
             SimpleFileBrowser.FileBrowser.PickMode.Files, false, Application.persistentDataPath, "ExportName", "Export", "Export");
     }
 
+    public override void Deactivate ()
+    {
+    }
+
     private void HandleExport ( string path )
     {
         ExportMeshToOBJ.ExportToOBJ(path, _mesh: chunksHolder.GatherMeshes());
-    }
-
-    public override void Deactivate ()
-    {
     }
 }

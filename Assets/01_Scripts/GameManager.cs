@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -45,7 +44,7 @@ public class GameManager : MonoBehaviour
     {
         string maxAmountOfundo = PlayerPrefs.GetString("MaxAmountOfUndos", undoSettings.maxAmountOfStoredUndos.ToString());
 
-        if ( !Int32.TryParse(maxAmountOfundo, out int maxAmountOfUndos) )
+        if ( !int.TryParse(maxAmountOfundo, out int maxAmountOfUndos) )
         {
             undoSettings.maxAmountOfStoredUndos = 100;
         }

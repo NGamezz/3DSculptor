@@ -18,8 +18,14 @@ public class Brush : Tool, ISizeChangable
     {
         Debug.Log(brushData);
         this.brushData = brushData;
-        cacheBrushData = brushData;
-        Debug.Log(this.brushData);
+
+        cacheBrushData = new()
+        {
+            size = brushData.size,
+            weight = brushData.weight,
+            ownLayer = brushData.ownLayer,
+            ghostMaterial = brushData.ghostMaterial,
+        };
     }
 
     public void OnDisable ()
@@ -50,6 +56,14 @@ public class Brush : Tool, ISizeChangable
         state = false;
         ghost.SetActive(false);
     }
+  
+    public virtual void OnAwake ()
+    {
+        camera = Camera.main;
+        Brush = true;
+        IgnoreCooldown = false;
+        UpdateToolSize();
+    }
 
     protected void GetPositionOnModel ()
     {
@@ -63,14 +77,6 @@ public class Brush : Tool, ISizeChangable
 
         targetPosition = results[0].point;
         ghost.transform.position = targetPosition;
-    }
-
-    public virtual void OnAwake ()
-    {
-        camera = Camera.main;
-        Brush = true;
-        IgnoreCooldown = false;
-        UpdateToolSize();
     }
 
     protected void Perform ( Vector3 point, bool state )
